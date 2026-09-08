@@ -427,3 +427,11 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Node
+node_modules/
+dist/
+.env
+
+# JetBrains Rider
+.idea/
