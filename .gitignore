@@ -435,3 +435,7 @@ dist/
 
 # JetBrains Rider
 .idea/
+
+# docs: publish only report files (Звіт_*), keep spec/drafts local
+# docs/*
+# !docs/Звіт_*
