@@ -1,4 +1,5 @@
 using Zatyshok.Infrastructure;
+using Zatyshok.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,12 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+
+    // The database itself is created by `dotnet ef database update` (see README);
+    // here we only fill an empty database with demo data.
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<ZatyshokDbContext>();
+    await DevelopmentDataSeeder.SeedAsync(db, app.Logger);
 }
 
 app.UseHttpsRedirection();
