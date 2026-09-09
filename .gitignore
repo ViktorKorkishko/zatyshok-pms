@@ -439,3 +439,6 @@ dist/
 # docs: publish only report files (Звіт_*), keep spec/drafts local
 # docs/*
 # !docs/Звіт_*
+
+# generated diagrams for the report stay local (PLAN.md, DoD item 7)
+docs/diagrams/
