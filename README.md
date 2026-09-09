@@ -73,8 +73,10 @@ docker exec -it zatyshok-postgres psql -U zatyshok -d zatyshok
 # нова міграція
 dotnet ef migrations add <Name> --project src/Zatyshok.Infrastructure --startup-project src/Zatyshok.Api
 
-# скинути БД повністю (обережно: видаляє дані)
-docker compose down -v && docker compose up -d
+# скинути БД повністю (обережно: видаляє дані) — два окремі кроки,
+# бо `&&` не працює у Windows PowerShell 5.1
+docker compose down -v
+docker compose up -d
 ```
 
 ## Конвенції
