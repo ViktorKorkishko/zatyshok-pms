@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: zatyshok-postgres
+    environment:
+      POSTGRES_DB: zatyshok
+      POSTGRES_USER: ${POSTGRES_USER:-zatyshok}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env (see .env.example)}
+    ports:
+      - "5432:5432"
+    volumes:
+      - zatyshok-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d zatyshok"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Local SMTP sink for development: all outgoing mail lands in its web UI,
+  # nothing is ever delivered to real mailboxes.
+  smtp4dev:
+    image: rnwood/smtp4dev:v3
+    container_name: zatyshok-smtp4dev
+    ports:
+      - "8025:80"   # web UI: http://localhost:8025
+      - "1025:25"   # SMTP endpoint for the Worker
+    volumes:
+      - zatyshok-smtp4dev:/smtp4dev
+
+volumes:
+  zatyshok-pgdata:
+  zatyshok-smtp4dev:

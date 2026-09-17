@@ -435,3 +435,6 @@ dist/
 
 # JetBrains Rider
 .idea/
+
+# generated diagrams for the report stay local
+docs/diagrams/
