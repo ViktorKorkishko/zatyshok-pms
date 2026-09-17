@@ -1,15 +1,19 @@
+using Zatyshok.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// User-secrets are loaded in every environment (not only Development) so that
+// `dotnet ef database update` picks up DB_PASSWORD without extra variables.
+builder.Configuration.AddUserSecrets<Program>(optional: true);
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddZatyshokInfrastructure(builder.Configuration);
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
