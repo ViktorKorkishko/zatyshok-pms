@@ -8,8 +8,8 @@ namespace Zatyshok.Infrastructure.Persistence;
 /// Fills an empty Development database with the «Затишок» network from docs/02
 /// (table 5.1): 5 hotels, 3 network-wide categories, 5 rooms per hotel, a rate for
 /// every (hotel, category) pair and two seasonal periods. Idempotent: does nothing
-/// when hotels already exist. Ids are fixed so that manual Swagger checks and
-/// integration tests can reference the same data across database resets.
+/// when hotels already exist. Every id is deterministic so that manual Swagger
+/// checks and integration tests can reference the same data across database resets.
 /// </summary>
 public static class DevelopmentDataSeeder
 {
@@ -22,6 +22,13 @@ public static class DevelopmentDataSeeder
     private static readonly Guid OdesaId = Guid.Parse("22222222-2222-2222-2222-222222222203");
     private static readonly Guid DniproId = Guid.Parse("22222222-2222-2222-2222-222222222204");
     private static readonly Guid KarpatyId = Guid.Parse("22222222-2222-2222-2222-222222222205");
+
+    // Deterministic ids for the seeded rows: last two digits are <hotel index><ordinal>.
+    private static Guid RoomId(int hotelIndex, int roomIndex)
+        => Guid.Parse($"33333333-3333-3333-3333-3333333333{hotelIndex}{roomIndex}");
+
+    private static Guid RateId(int hotelIndex, int categoryIndex)
+        => Guid.Parse($"44444444-4444-4444-4444-4444444444{hotelIndex}{categoryIndex}");
 
     public static async Task SeedAsync(ZatyshokDbContext db, ILogger logger, CancellationToken cancellationToken = default)
     {
@@ -60,23 +67,24 @@ public static class DevelopmentDataSeeder
 
         var rooms = new List<Room>();
         var rates = new List<Rate>();
-        foreach (var hotel in hotels)
+        for (var h = 0; h < hotels.Length; h++)
         {
+            var hotel = hotels[h];
             rooms.AddRange(new[]
             {
-                new Room { HotelId = hotel.Id, RoomCategoryId = StandardId, Number = "101", Floor = 1, Capacity = 2, Amenities = "Wi-Fi, кондиціонер, телевізор" },
-                new Room { HotelId = hotel.Id, RoomCategoryId = StandardId, Number = "102", Floor = 1, Capacity = 2, Amenities = "Wi-Fi, кондиціонер, телевізор" },
-                new Room { HotelId = hotel.Id, RoomCategoryId = SuperiorId, Number = "201", Floor = 2, Capacity = 2, Amenities = "Wi-Fi, кондиціонер, телевізор, міні-бар" },
-                new Room { HotelId = hotel.Id, RoomCategoryId = SuperiorId, Number = "202", Floor = 2, Capacity = 3, Amenities = "Wi-Fi, кондиціонер, телевізор, міні-бар" },
-                new Room { HotelId = hotel.Id, RoomCategoryId = SuiteId, Number = "301", Floor = 3, Capacity = 4, Amenities = "Wi-Fi, кондиціонер, телевізор, міні-бар, ванна" },
+                new Room { Id = RoomId(h, 0), HotelId = hotel.Id, RoomCategoryId = StandardId, Number = "101", Floor = 1, Capacity = 2, Amenities = "Wi-Fi, кондиціонер, телевізор" },
+                new Room { Id = RoomId(h, 1), HotelId = hotel.Id, RoomCategoryId = StandardId, Number = "102", Floor = 1, Capacity = 2, Amenities = "Wi-Fi, кондиціонер, телевізор" },
+                new Room { Id = RoomId(h, 2), HotelId = hotel.Id, RoomCategoryId = SuperiorId, Number = "201", Floor = 2, Capacity = 2, Amenities = "Wi-Fi, кондиціонер, телевізор, міні-бар" },
+                new Room { Id = RoomId(h, 3), HotelId = hotel.Id, RoomCategoryId = SuperiorId, Number = "202", Floor = 2, Capacity = 3, Amenities = "Wi-Fi, кондиціонер, телевізор, міні-бар" },
+                new Room { Id = RoomId(h, 4), HotelId = hotel.Id, RoomCategoryId = SuiteId, Number = "301", Floor = 3, Capacity = 4, Amenities = "Wi-Fi, кондиціонер, телевізор, міні-бар, ванна" },
             });
 
             var prices = basePrices[hotel.Id];
             rates.AddRange(new[]
             {
-                new Rate { HotelId = hotel.Id, RoomCategoryId = StandardId, BasePricePerNight = prices.Standard },
-                new Rate { HotelId = hotel.Id, RoomCategoryId = SuperiorId, BasePricePerNight = prices.Superior },
-                new Rate { HotelId = hotel.Id, RoomCategoryId = SuiteId, BasePricePerNight = prices.Suite },
+                new Rate { Id = RateId(h, 0), HotelId = hotel.Id, RoomCategoryId = StandardId, BasePricePerNight = prices.Standard },
+                new Rate { Id = RateId(h, 1), HotelId = hotel.Id, RoomCategoryId = SuperiorId, BasePricePerNight = prices.Superior },
+                new Rate { Id = RateId(h, 2), HotelId = hotel.Id, RoomCategoryId = SuiteId, BasePricePerNight = prices.Suite },
             });
         }
 
@@ -87,6 +95,7 @@ public static class DevelopmentDataSeeder
         {
             new SeasonRate
             {
+                Id = Guid.Parse("55555555-5555-5555-5555-555555555501"),
                 RateId = odesaStandardRate.Id,
                 Name = "Літній сезон 2026",
                 StartDate = new DateOnly(2026, 6, 1),
@@ -95,6 +104,7 @@ public static class DevelopmentDataSeeder
             },
             new SeasonRate
             {
+                Id = Guid.Parse("55555555-5555-5555-5555-555555555502"),
                 RateId = karpatyStandardRate.Id,
                 Name = "Зимові свята 2026–2027",
                 StartDate = new DateOnly(2026, 12, 20),
