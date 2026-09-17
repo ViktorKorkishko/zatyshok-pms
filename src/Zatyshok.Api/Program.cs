@@ -13,6 +13,9 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddZatyshokInfrastructure(builder.Configuration);
 
+// GET /health returns Healthy only when the database answers (NFR-19).
+builder.Services.AddHealthChecks().AddDbContextCheck<ZatyshokDbContext>("database");
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -32,5 +35,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHealthChecks("/health");
 
 app.Run();
