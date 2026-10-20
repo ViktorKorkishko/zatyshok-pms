@@ -15,9 +15,9 @@ namespace Zatyshok.Infrastructure.Persistence;
 /// <item>one user for each of the 9 roles, 3 guests and 1 corporate client.</item>
 /// </list>
 /// The roles themselves are not seeded here: they come with the migration (HasData in RoleConfiguration).
-/// Idempotent: each part does nothing when its table already has rows, so a database seeded in T1
-/// gets only the new parts. Every id is deterministic so that manual Swagger checks and integration
-/// tests can reference the same data across database resets.
+/// Idempotent: each part does nothing when its first table already has rows (Hotels, Services,
+/// Users), so a database seeded in T1 gets only the new parts. Every id is deterministic so that
+/// manual Swagger checks and integration tests can reference the same data across database resets.
 /// </summary>
 public static class DevelopmentDataSeeder
 {
@@ -184,13 +184,14 @@ public static class DevelopmentDataSeeder
 
     /// <summary>
     /// One user for each role, three guests and a corporate client. They are saved together:
-    /// the first guest is linked to the guest user.
+    /// the first guest is linked to the guest user. Only Users is checked, so the whole part is
+    /// skipped when users exist, even if Guests or CorporateClients are empty.
     /// </summary>
     private static async Task SeedPeopleAsync(ZatyshokDbContext db, ILogger logger, CancellationToken cancellationToken)
     {
         if (await db.Users.AnyAsync(cancellationToken))
         {
-            logger.LogInformation("Development seed of users skipped: users already exist");
+            logger.LogInformation("Development seed of people skipped: users already exist");
             return;
         }
 
