@@ -416,6 +416,7 @@ public class Booking
             throw new DomainException("Сума платежу має бути більшою за нуль.");
         }
 
+        Money.EnsureTwoDecimals(amount, "Сума платежу");
         AddHistory(BookingHistoryEventType.PaymentRecorded, null, null, Format(amount), comment, authorUserId, nowUtc);
     }
 
@@ -435,6 +436,8 @@ public class Booking
             {
                 throw new DomainException($"Ціна ночі {Format(night.Night)} не може бути від'ємною.");
             }
+
+            Money.EnsureTwoDecimals(night.Price, $"Ціна ночі {Format(night.Night)}");
 
             if (!prices.TryAdd(night.Night, night.Price))
             {

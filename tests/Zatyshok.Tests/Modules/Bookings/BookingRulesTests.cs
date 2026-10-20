@@ -509,6 +509,18 @@ public class BookingRulesTests
     }
 
     [Fact]
+    public void AmountsFinerThanAKopiykaAreRejected()
+    {
+        var booking = InStatus(BookingStatus.Confirmed);
+
+        Assert.Throws<DomainException>(() => booking.RecordPayment(0.004m, null, OperatorId, Now));
+        Assert.Throws<DomainException>(() => booking.ChangeDates(
+            CheckIn, CheckOut.AddDays(1), [.. Nights(CheckIn, CheckOut), new(CheckOut, 2500.005m)], Deadline, OperatorId, Now));
+        Assert.Equal(CheckOut, booking.CheckOutDate);
+        Assert.Equal(5000m, booking.TotalPrice);
+    }
+
+    [Fact]
     public void RecordPaymentWritesPaymentRecordedWithoutChangingTheBooking()
     {
         var booking = InStatus(BookingStatus.Completed);

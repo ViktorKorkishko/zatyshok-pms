@@ -151,6 +151,7 @@ public class Invoice
             throw new DomainException("Сума платежу має бути більшою за нуль.");
         }
 
+        Money.EnsureTwoDecimals(amount, "Сума платежу");
         if (kind == PaymentKind.Payment && amount > GetBalance())
         {
             throw new DomainException("Сума платежу перевищує залишок за рахунком.");
@@ -241,13 +242,19 @@ public class Invoice
                 throw new DomainException($"Ціна ночі {night.Night:yyyy-MM-dd} не може бути від'ємною.");
             }
 
+            Money.EnsureTwoDecimals(night.Price, $"Ціна ночі {night.Night:yyyy-MM-dd}");
+
             if (!prices.TryAdd(night.Night, night.Price))
             {
                 throw new DomainException($"Ніч {night.Night:yyyy-MM-dd} указано двічі.");
             }
         }
 
-        // A booking has at least one night, so a live invoice always has T > 0 (12.3.6).
+        // A booking has at least one night, so a live invoice always has accommodation lines (12.3.6).
+        // Table 12.28 concludes from this that T > 0. That holds while nights are priced from the
+        // rates, which are > 0 (CK_Rates_BasePricePerNight, CK_SeasonRates_PricePerNight); the domain,
+        // like CK_BookingNights_Price, also accepts a free night, and an invoice with T = 0 stays
+        // Open, because no payment above the balance is accepted and P stays 0.
         if (prices.Count == 0)
         {
             throw new DomainException("Рахунок має містити позиції проживання: потрібна щонайменше одна ніч.");

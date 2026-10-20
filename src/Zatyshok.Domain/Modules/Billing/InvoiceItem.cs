@@ -41,6 +41,8 @@ public class InvoiceItem
             throw new DomainException("Ціна не може бути від'ємною.");
         }
 
+        Money.EnsureTwoDecimals(unitPrice, "Ціна позиції");
+
         InvoiceId = invoiceId;
         Kind = kind;
         ServiceId = serviceId;

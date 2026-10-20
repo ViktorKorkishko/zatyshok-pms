@@ -90,6 +90,35 @@ public class InvoiceTests
         Assert.Throws<DomainException>(() => Pay(invoice, amount));
     }
 
+    [Theory]
+    [InlineData("2499.995")]
+    [InlineData("0.004")]
+    public void PaymentFinerThanAKopiykaIsRejected(string amount)
+    {
+        // PostgreSQL would round it in numeric(12,2), and the saved status would not match the sums.
+        var invoice = NewInvoice();
+
+        Assert.Throws<DomainException>(() => Pay(invoice, decimal.Parse(amount, System.Globalization.CultureInfo.InvariantCulture)));
+        Assert.Empty(invoice.Payments);
+        Assert.Equal(InvoiceStatus.Open, invoice.Status);
+    }
+
+    [Fact]
+    public void PricesFinerThanAKopiykaAreRejected()
+    {
+        var invoice = NewInvoice();
+
+        Assert.Throws<DomainException>(() => invoice.AddItem(BreakfastId, "Сніданок", CheckIn, 1, 350.005m, ReceptionistId, Now));
+        Assert.Throws<DomainException>(() => invoice.SyncAccommodation(Nights(price: 2500.001m), Now));
+        Assert.Throws<DomainException>(() => new Invoice(BookingId, null, Nights(price: 2500.001m), Now));
+        Assert.Equal(5000m, invoice.GetTotal());
+
+        // Trailing zeros are not extra precision.
+        invoice.AddItem(BreakfastId, "Сніданок", CheckIn, 1, 350.000m, ReceptionistId, Now);
+        Pay(invoice, 1000.10m);
+        Assert.Equal(5350m, invoice.GetTotal());
+    }
+
     [Fact]
     public void RefundAbovePaidAmountIsRejected()
     {
