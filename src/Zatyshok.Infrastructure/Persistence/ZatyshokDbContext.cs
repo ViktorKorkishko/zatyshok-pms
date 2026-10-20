@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Zatyshok.Domain.Modules.Rooms;
 
 namespace Zatyshok.Infrastructure.Persistence;
@@ -22,5 +23,17 @@ public class ZatyshokDbContext(DbContextOptions<ZatyshokDbContext> options) : Db
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ZatyshokDbContext).Assembly);
+
+        // Ids are created in code (Guid.NewGuid() in the entity initializer). By convention EF
+        // treats Guid keys as generated on add and takes a non-empty key for an already saved row,
+        // so a child added through a navigation (hotel.Rooms.Add(room)) would be saved as an UPDATE.
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            var id = entityType.FindProperty("Id");
+            if (id?.ClrType == typeof(Guid))
+            {
+                id.ValueGenerated = ValueGenerated.Never;
+            }
+        }
     }
 }

@@ -25,7 +25,6 @@ namespace Zatyshok.Infrastructure.Migrations
             modelBuilder.Entity("Zatyshok.Domain.Modules.Rooms.Hotel", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("Address")
@@ -75,7 +74,6 @@ namespace Zatyshok.Infrastructure.Migrations
             modelBuilder.Entity("Zatyshok.Domain.Modules.Rooms.Rate", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("BasePricePerNight")
@@ -101,7 +99,6 @@ namespace Zatyshok.Infrastructure.Migrations
             modelBuilder.Entity("Zatyshok.Domain.Modules.Rooms.Room", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("Amenities")
@@ -152,7 +149,6 @@ namespace Zatyshok.Infrastructure.Migrations
             modelBuilder.Entity("Zatyshok.Domain.Modules.Rooms.RoomCategory", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<int>("Capacity")
@@ -181,7 +177,6 @@ namespace Zatyshok.Infrastructure.Migrations
             modelBuilder.Entity("Zatyshok.Domain.Modules.Rooms.SeasonRate", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateOnly>("EndDate")
