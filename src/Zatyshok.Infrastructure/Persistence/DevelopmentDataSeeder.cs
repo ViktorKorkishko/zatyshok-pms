@@ -89,6 +89,7 @@ public static class DevelopmentDataSeeder
         }
 
         // Two seasonal periods (FR-08): summer by the sea and winter holidays in the mountains.
+        // Keep both in the future: search rejects check-in before today (FR-10), so a past season is never priced.
         var odesaStandardRate = rates.Single(r => r.HotelId == OdesaId && r.RoomCategoryId == StandardId);
         var karpatyStandardRate = rates.Single(r => r.HotelId == KarpatyId && r.RoomCategoryId == StandardId);
         var seasonRates = new[]
@@ -97,9 +98,9 @@ public static class DevelopmentDataSeeder
             {
                 Id = Guid.Parse("55555555-5555-5555-5555-555555555501"),
                 RateId = odesaStandardRate.Id,
-                Name = "Літній сезон 2026",
-                StartDate = new DateOnly(2026, 6, 1),
-                EndDate = new DateOnly(2026, 8, 31),
+                Name = "Літній сезон 2027",
+                StartDate = new DateOnly(2027, 6, 1),
+                EndDate = new DateOnly(2027, 8, 31),
                 PricePerNight = 2400m,
             },
             new SeasonRate
