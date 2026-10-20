@@ -39,6 +39,9 @@ public class Room
     /// <summary>Rooms with stay history are deactivated instead of deleted (UC-08).</summary>
     public bool IsActive { get; private set; } = true;
 
+    /// <summary>Concurrency token mapped to the PostgreSQL system column xmin (12.3).</summary>
+    public uint Version { get; private set; }
+
     /// <summary>Free → Reserved: pre-assignment to a booking arriving today (FR-19). Date and category are checked by <c>Booking.AssignRoom</c>.</summary>
     public void Reserve()
     {
