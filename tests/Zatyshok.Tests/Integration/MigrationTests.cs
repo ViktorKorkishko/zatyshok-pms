@@ -28,7 +28,8 @@ public class MigrationTests(EmptyPostgresDatabaseFixture database) : IClassFixtu
 
         // A T1 database with data.
         await migrator.MigrateAsync("InitialRooms");
-        var hotelId = await InsertT1DataAsync(connection);
+        var hotelId = Guid.NewGuid();
+        await T1Data.InsertAsync(connection, hotelId);
         var t1Snapshot = await SnapshotAsync(connection, "public");
 
         // Upgrade: the T1 tables move to "rooms" with their rows, the new Hotels columns get
@@ -72,34 +73,6 @@ public class MigrationTests(EmptyPostgresDatabaseFixture database) : IClassFixtu
             await QueryListAsync(connection, "SELECT table_schema || '.' || table_name FROM information_schema.views WHERE table_schema = 'reporting'"));
         Assert.Equal(new[] { "TR_AuditLogs_AppendOnly", "TR_AuditLogs_NoTruncate" },
             await QueryListAsync(connection, """SELECT tgname FROM pg_trigger WHERE tgrelid = 'audit."AuditLogs"'::regclass AND NOT tgisinternal"""));
-    }
-
-    private static async Task<Guid> InsertT1DataAsync(NpgsqlConnection connection)
-    {
-        var hotelId = Guid.NewGuid();
-        var categoryId = Guid.NewGuid();
-        var rateId = Guid.NewGuid();
-        await using var command = new NpgsqlCommand(
-            """
-            INSERT INTO public."Hotels" ("Id", "Name", "City", "Address", "Stars", "TimeZoneId", "Phone", "Email", "IsActive", "CreatedAtUtc")
-            VALUES (@hotel, 'Затишок Київ', 'Київ', 'вул. Хрещатик, 1', 4, 'Europe/Kyiv', '+380441234567', 'kyiv@zatyshok.ua', true, now());
-            INSERT INTO public."RoomCategories" ("Id", "Name", "Description", "Capacity", "IsActive")
-            VALUES (@category, 'Standard', 'Стандартний номер', 2, true);
-            INSERT INTO public."Rooms" ("Id", "HotelId", "RoomCategoryId", "Number", "Floor", "Capacity", "Amenities", "Notes", "Status", "IsActive")
-            VALUES (@room, @hotel, @category, '101', 1, 2, 'Wi-Fi', NULL, 'Free', true);
-            INSERT INTO public."Rates" ("Id", "HotelId", "RoomCategoryId", "BasePricePerNight")
-            VALUES (@rate, @hotel, @category, 2500);
-            INSERT INTO public."SeasonRates" ("Id", "RateId", "Name", "StartDate", "EndDate", "PricePerNight")
-            VALUES (@season, @rate, 'Літній сезон 2027', DATE '2027-06-01', DATE '2027-08-31', 2400);
-            """,
-            connection);
-        command.Parameters.AddWithValue("hotel", hotelId);
-        command.Parameters.AddWithValue("category", categoryId);
-        command.Parameters.AddWithValue("room", Guid.NewGuid());
-        command.Parameters.AddWithValue("rate", rateId);
-        command.Parameters.AddWithValue("season", Guid.NewGuid());
-        await command.ExecuteNonQueryAsync();
-        return hotelId;
     }
 
     /// <summary>All rows of the five T1 tables of a schema as JSON text, table by table.</summary>

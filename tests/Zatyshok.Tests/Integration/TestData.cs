@@ -116,6 +116,39 @@ internal static class TestData
     public static string Unique() => Guid.NewGuid().ToString("N")[..8];
 }
 
+/// <summary>Rows of a database from T1: written by SQL, because the current model has other tables.</summary>
+internal static class T1Data
+{
+    /// <summary>
+    /// One hotel with a category, a room, a rate and a seasonal period in the public tables of
+    /// the InitialRooms migration. The database must be migrated to InitialRooms only.
+    /// </summary>
+    public static async Task InsertAsync(NpgsqlConnection connection, Guid hotelId)
+    {
+        var rateId = Guid.NewGuid();
+        await using var command = new NpgsqlCommand(
+            """
+            INSERT INTO public."Hotels" ("Id", "Name", "City", "Address", "Stars", "TimeZoneId", "Phone", "Email", "IsActive", "CreatedAtUtc")
+            VALUES (@hotel, 'Затишок Київ', 'Київ', 'вул. Хрещатик, 1', 4, 'Europe/Kyiv', '+380441234567', 'kyiv@zatyshok.ua', true, now());
+            INSERT INTO public."RoomCategories" ("Id", "Name", "Description", "Capacity", "IsActive")
+            VALUES (@category, 'Standard', 'Стандартний номер', 2, true);
+            INSERT INTO public."Rooms" ("Id", "HotelId", "RoomCategoryId", "Number", "Floor", "Capacity", "Amenities", "Notes", "Status", "IsActive")
+            VALUES (@room, @hotel, @category, '101', 1, 2, 'Wi-Fi', NULL, 'Free', true);
+            INSERT INTO public."Rates" ("Id", "HotelId", "RoomCategoryId", "BasePricePerNight")
+            VALUES (@rate, @hotel, @category, 2500);
+            INSERT INTO public."SeasonRates" ("Id", "RateId", "Name", "StartDate", "EndDate", "PricePerNight")
+            VALUES (@season, @rate, 'Літній сезон 2027', DATE '2027-06-01', DATE '2027-08-31', 2400);
+            """,
+            connection);
+        command.Parameters.AddWithValue("hotel", hotelId);
+        command.Parameters.AddWithValue("category", Guid.NewGuid());
+        command.Parameters.AddWithValue("room", Guid.NewGuid());
+        command.Parameters.AddWithValue("rate", rateId);
+        command.Parameters.AddWithValue("season", Guid.NewGuid());
+        await command.ExecuteNonQueryAsync();
+    }
+}
+
 /// <summary>Helpers for tests in which a second transaction waits for a row lock (12.8.2).</summary>
 internal static class RowLocks
 {
