@@ -57,7 +57,7 @@ public class BookingTransitionTests
         ["ChangeWishes"] = (null, b => b.ChangeWishes("Високий поверх", OperatorId, Now)),
         ["UpgradeCategory"] = (null, b => b.UpgradeCategory(SuiteId, CheckIn, "Standard зайнято", OperatorId, Now)),
         ["Extend"] = (null, b => b.Extend(CheckOut.AddDays(1), Nights(CheckOut, CheckOut.AddDays(1)), OperatorId, Now)),
-        ["ShortenStay"] = (null, b => b.ShortenStay(CheckIn.AddDays(1), OperatorId, Now)),
+        ["ShortenStay"] = (null, b => b.ShortenStay(CheckIn.AddDays(1), CheckIn, OperatorId, Now)),
         ["MoveToRoom"] = (null, b => b.MoveToRoom(OtherRoomId, StandardId, "Не працює кондиціонер", OperatorId, Now)),
         ["RecordPayment"] = (null, b => b.RecordPayment(1000m, "Передоплата карткою", OperatorId, Now)),
     };

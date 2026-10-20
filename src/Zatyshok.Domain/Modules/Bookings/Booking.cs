@@ -351,13 +351,22 @@ public class Booking
         RecordChange(nameof(TotalPrice), oldTotal, TotalPrice, null, authorUserId, nowUtc);
     }
 
-    /// <summary>Early departure (UC-13 A1): removes the nights from the new check-out date on; the caller removes their invoice lines.</summary>
-    public void ShortenStay(DateOnly newCheckOutDate, Guid? authorUserId, DateTime nowUtc)
+    /// <summary>
+    /// Early departure (UC-13 A1): removes the nights from the new check-out date on; the caller
+    /// removes their invoice lines. The new check-out date is not earlier than the hotel's current
+    /// date: the nights the guest has already stayed are not removed and not refunded.
+    /// </summary>
+    public void ShortenStay(DateOnly newCheckOutDate, DateOnly hotelToday, Guid? authorUserId, DateTime nowUtc)
     {
         EnsureStatus("скоротити проживання", BookingStatus.CheckedIn);
         if (newCheckOutDate <= CheckInDate || newCheckOutDate >= CheckOutDate)
         {
             throw new DomainException("Нова дата виїзду має бути пізнішою за дату заїзду і ранішою за поточну дату виїзду.");
+        }
+
+        if (newCheckOutDate < hotelToday)
+        {
+            throw new DomainException("Нова дата виїзду не може бути ранішою за поточну дату готелю: прожиті ночі не скасовуються.");
         }
 
         var oldCheckOut = CheckOutDate;

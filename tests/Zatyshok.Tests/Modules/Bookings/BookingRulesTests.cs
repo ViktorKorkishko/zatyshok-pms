@@ -431,7 +431,7 @@ public class BookingRulesTests
     {
         var booking = InStatus(BookingStatus.CheckedIn);
 
-        booking.ShortenStay(CheckIn.AddDays(1), OperatorId, Now);
+        booking.ShortenStay(CheckIn.AddDays(1), CheckIn, OperatorId, Now);
 
         Assert.Equal(CheckIn.AddDays(1), booking.CheckOutDate);
         Assert.Equal([CheckIn], booking.Nights.Select(n => n.Night));
@@ -446,7 +446,27 @@ public class BookingRulesTests
     {
         var booking = InStatus(BookingStatus.CheckedIn);
 
-        Assert.Throws<DomainException>(() => booking.ShortenStay(CheckIn.AddDays(daysAfterCheckIn), OperatorId, Now));
+        Assert.Throws<DomainException>(() => booking.ShortenStay(CheckIn.AddDays(daysAfterCheckIn), CheckIn, OperatorId, Now));
+    }
+
+    [Fact]
+    public void ShortenStayKeepsTheNightsAlreadyStayed()
+    {
+        // A four-night stay 10–14.11; on 13.11 the guest has already stayed three nights.
+        var booking = InStatus(BookingStatus.CheckedIn);
+        booking.Extend(CheckOut.AddDays(2), Nights(CheckOut, CheckOut.AddDays(2)), OperatorId, Now);
+        var hotelToday = CheckIn.AddDays(3);
+        var historyCount = booking.History.Count;
+
+        Assert.Throws<DomainException>(() => booking.ShortenStay(CheckIn.AddDays(1), hotelToday, OperatorId, Now.AddDays(3)));
+        Assert.Equal(4, booking.Nights.Count);
+        Assert.Equal(historyCount, booking.History.Count);
+
+        // Leaving today removes only tonight.
+        booking.ShortenStay(hotelToday, hotelToday, OperatorId, Now.AddDays(3));
+        Assert.Equal(hotelToday, booking.CheckOutDate);
+        Assert.Equal(3, booking.Nights.Count);
+        Assert.Equal(3 * StandardPrice, booking.TotalPrice);
     }
 
     [Fact]
