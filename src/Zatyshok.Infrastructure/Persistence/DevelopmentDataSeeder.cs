@@ -23,12 +23,14 @@ public static class DevelopmentDataSeeder
     private static readonly Guid DniproId = Guid.Parse("22222222-2222-2222-2222-222222222204");
     private static readonly Guid KarpatyId = Guid.Parse("22222222-2222-2222-2222-222222222205");
 
-    // Deterministic ids for the seeded rows: last two digits are <hotel index><ordinal>.
-    private static Guid RoomId(int hotelIndex, int roomIndex)
-        => Guid.Parse($"33333333-3333-3333-3333-3333333333{hotelIndex}{roomIndex}");
+    // Deterministic ids for the seeded rows: the last four digits are <hotel index:2><ordinal:2>.
+    // Both parts have a fixed width (D2), so the last group always has 12 digits, even for a
+    // hotel with 10 or more rooms (without D2 Guid.Parse failed there).
+    internal static Guid RoomId(int hotelIndex, int roomIndex)
+        => Guid.Parse($"33333333-3333-3333-3333-33333333{hotelIndex:D2}{roomIndex:D2}");
 
-    private static Guid RateId(int hotelIndex, int categoryIndex)
-        => Guid.Parse($"44444444-4444-4444-4444-4444444444{hotelIndex}{categoryIndex}");
+    internal static Guid RateId(int hotelIndex, int categoryIndex)
+        => Guid.Parse($"44444444-4444-4444-4444-44444444{hotelIndex:D2}{categoryIndex:D2}");
 
     public static async Task SeedAsync(ZatyshokDbContext db, ILogger logger, CancellationToken cancellationToken = default)
     {
