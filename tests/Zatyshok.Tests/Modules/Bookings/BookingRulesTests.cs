@@ -82,10 +82,11 @@ public class BookingRulesTests
     {
         var booking = InStatus(status);
 
-        booking.Cancel(null, byGuest: true, GuestId, Deadline.AddSeconds(-1));
+        booking.Cancel(null, byGuest: true, GuestUserId, Deadline.AddSeconds(-1));
 
         Assert.Equal(BookingStatus.Cancelled, booking.Status);
         Assert.Null(booking.CancellationReason);
+        Assert.Equal(GuestUserId, booking.History.Last().AuthorUserId);
     }
 
     [Theory]
@@ -95,7 +96,7 @@ public class BookingRulesTests
     {
         var booking = InStatus(BookingStatus.Confirmed);
 
-        Assert.Throws<DomainException>(() => booking.Cancel(null, byGuest: true, GuestId, Deadline.AddSeconds(secondsAfterDeadline)));
+        Assert.Throws<DomainException>(() => booking.Cancel(null, byGuest: true, GuestUserId, Deadline.AddSeconds(secondsAfterDeadline)));
         Assert.Equal(BookingStatus.Confirmed, booking.Status);
     }
 

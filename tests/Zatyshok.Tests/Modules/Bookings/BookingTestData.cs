@@ -9,7 +9,14 @@ internal static class BookingTestData
     public static readonly Guid HotelId = Guid.Parse("22222222-2222-2222-2222-222222222201");
     public static readonly Guid StandardId = Guid.Parse("11111111-1111-1111-1111-111111111101");
     public static readonly Guid SuiteId = Guid.Parse("11111111-1111-1111-1111-111111111103");
+    /// <summary>The guest profile (guests.Guests) that owns the booking.</summary>
     public static readonly Guid GuestId = Guid.Parse("88888888-8888-8888-8888-888888888801");
+
+    /// <summary>
+    /// The guest's account (identity.Users, Guest.UserId): the author of the guest's own actions,
+    /// because BookingHistory.AuthorUserId references Users, not Guests (table 12.14).
+    /// </summary>
+    public static readonly Guid GuestUserId = Guid.Parse("77777777-7777-7777-7777-777777777701");
     public static readonly Guid RoomId = Guid.Parse("33333333-3333-3333-3333-333333330000");
     public static readonly Guid OtherRoomId = Guid.Parse("33333333-3333-3333-3333-333333330001");
     public static readonly Guid OperatorId = Guid.Parse("77777777-7777-7777-7777-777777777702");
