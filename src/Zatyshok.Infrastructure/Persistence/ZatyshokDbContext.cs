@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Zatyshok.Domain.Modules.Audit;
 using Zatyshok.Domain.Modules.Billing;
 using Zatyshok.Domain.Modules.Bookings;
 using Zatyshok.Domain.Modules.Guests;
 using Zatyshok.Domain.Modules.Housekeeping;
 using Zatyshok.Domain.Modules.Identity;
+using Zatyshok.Domain.Modules.Notifications;
 using Zatyshok.Domain.Modules.Rooms;
 
 namespace Zatyshok.Infrastructure.Persistence;
@@ -55,6 +57,10 @@ public class ZatyshokDbContext(DbContextOptions<ZatyshokDbContext> options) : Db
     public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
 
     public DbSet<Payment> Payments => Set<Payment>();
+
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
