@@ -81,5 +81,12 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
         // Nights and History are read-only collections over the private fields _nights and _history;
         // EF finds the fields by name and fills them (relationships: BookingNightConfiguration,
         // BookingHistoryConfiguration).
+        //
+        // The nights are always loaded with the booking, even by db.Bookings.Find/Single without
+        // Include: ChangeDates, Extend and ShortenStay rebuild the nights from this list, and with an
+        // empty list the old nights would stay in the database and still count as occupied
+        // with no error raised. Lists that do not need them use IgnoreAutoIncludes() or Select(...).
+        // History is not loaded: the methods only append records to it.
+        builder.Navigation(b => b.Nights).AutoInclude();
     }
 }

@@ -48,5 +48,11 @@ public class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
 
         // Items and Payments are read-only collections over the private fields _items and _payments;
         // EF finds the fields by name (relationships: InvoiceItemConfiguration, PaymentConfiguration).
+        //
+        // Both are always loaded with the invoice, even without Include: the status is derived from
+        // their sums (table 12.28), and with empty lists a new line or payment would be saved with a
+        // wrong status. Lists use IgnoreAutoIncludes() or Select(...).
+        builder.Navigation(i => i.Items).AutoInclude();
+        builder.Navigation(i => i.Payments).AutoInclude();
     }
 }
