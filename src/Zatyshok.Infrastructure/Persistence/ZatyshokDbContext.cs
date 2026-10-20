@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Zatyshok.Domain.Modules.Billing;
+using Zatyshok.Domain.Modules.Bookings;
 using Zatyshok.Domain.Modules.Guests;
+using Zatyshok.Domain.Modules.Housekeeping;
 using Zatyshok.Domain.Modules.Identity;
 using Zatyshok.Domain.Modules.Rooms;
 
@@ -37,8 +40,29 @@ public class ZatyshokDbContext(DbContextOptions<ZatyshokDbContext> options) : Db
 
     public DbSet<CorporateClient> CorporateClients => Set<CorporateClient>();
 
+    public DbSet<Booking> Bookings => Set<Booking>();
+
+    public DbSet<BookingNight> BookingNights => Set<BookingNight>();
+
+    public DbSet<BookingHistory> BookingHistory => Set<BookingHistory>();
+
+    public DbSet<HousekeepingTask> HousekeepingTasks => Set<HousekeepingTask>();
+
+    public DbSet<MaintenanceIssue> MaintenanceIssues => Set<MaintenanceIssue>();
+
+    public DbSet<Invoice> Invoices => Set<Invoice>();
+
+    public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
+
+    public DbSet<Payment> Payments => Set<Payment>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Booking and invoice numbers for people (UC-04, FR-34): the columns take nextval(...)
+        // as their DEFAULT (BookingConfiguration, InvoiceConfiguration).
+        modelBuilder.HasSequence<long>("BookingNumbers", Schemas.Bookings).StartsAt(100001);
+        modelBuilder.HasSequence<long>("InvoiceNumbers", Schemas.Billing).StartsAt(100001);
+
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ZatyshokDbContext).Assembly);
 
         // Ids are created in code (Guid.NewGuid() in the entity initializer). By convention EF
