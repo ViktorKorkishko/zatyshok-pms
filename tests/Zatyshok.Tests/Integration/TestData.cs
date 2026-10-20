@@ -112,6 +112,34 @@ internal static class TestData
     public static string Unique() => Guid.NewGuid().ToString("N")[..8];
 }
 
+/// <summary>Helpers for tests in which a second transaction waits for a row lock (12.8.2).</summary>
+internal static class RowLocks
+{
+    public static Task<int> GetBackendPidAsync(ZatyshokDbContext db)
+        => db.Database.SqlQuery<int>($"SELECT pg_backend_pid() AS \"Value\"").SingleAsync();
+
+    /// <summary>Waits until the session <paramref name="pid"/> is blocked on a lock (pg_stat_activity).</summary>
+    public static async Task WaitUntilWaitingForLockAsync(PostgresDatabaseFixture database, int pid)
+    {
+        await using var monitor = await database.OpenConnectionAsync();
+        await using var command = new NpgsqlCommand("SELECT wait_event_type FROM pg_stat_activity WHERE pid = @pid", monitor);
+        command.Parameters.AddWithValue("pid", pid);
+
+        var deadline = DateTime.UtcNow.AddSeconds(30);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (await command.ExecuteScalarAsync() is "Lock")
+            {
+                return;
+            }
+
+            await Task.Delay(20);
+        }
+
+        Assert.Fail("The second transaction did not start waiting for the row lock.");
+    }
+}
+
 /// <summary>Checks for errors that PostgreSQL itself raises (constraint, trigger, privilege).</summary>
 internal static class PostgresAssert
 {

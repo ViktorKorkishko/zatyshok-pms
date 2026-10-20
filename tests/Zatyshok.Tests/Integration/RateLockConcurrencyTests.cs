@@ -1,7 +1,6 @@
 using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Npgsql;
 using Zatyshok.Domain.Modules.Bookings;
 using Zatyshok.Infrastructure.Persistence;
 
@@ -31,13 +30,13 @@ public class RateLockConcurrencyTests(PostgresDatabaseFixture database) : IClass
 
         // 2. The second transaction asks for the same lock in the background and has to wait.
         await using var secondTransaction = await second.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
-        var secondPid = await GetBackendPidAsync(second);
+        var secondPid = await RowLocks.GetBackendPidAsync(second);
         var secondAttempt = Task.Run(async () =>
         {
             await LockRateAsync(second, hotel);
             return await TryBookAsync(second, secondTransaction, hotel, checkIn);
         });
-        await WaitUntilWaitingForLockAsync(secondPid);
+        await RowLocks.WaitUntilWaitingForLockAsync(database, secondPid);
 
         // 3. The first transaction sees one free room, books it and commits; this releases the lock.
         Assert.True(await TryBookAsync(first, firstTransaction, hotel, checkIn));
@@ -140,30 +139,6 @@ public class RateLockConcurrencyTests(PostgresDatabaseFixture database) : IClass
         db.Bookings.Add(booking);
         await db.SaveChangesAsync();
         await transaction.CommitAsync();
-    }
-
-    private static Task<int> GetBackendPidAsync(ZatyshokDbContext db)
-        => db.Database.SqlQuery<int>($"SELECT pg_backend_pid() AS \"Value\"").SingleAsync();
-
-    /// <summary>Waits until the session <paramref name="pid"/> is blocked on a lock (pg_stat_activity).</summary>
-    private async Task WaitUntilWaitingForLockAsync(int pid)
-    {
-        await using var monitor = await database.OpenConnectionAsync();
-        await using var command = new NpgsqlCommand("SELECT wait_event_type FROM pg_stat_activity WHERE pid = @pid", monitor);
-        command.Parameters.AddWithValue("pid", pid);
-
-        var deadline = DateTime.UtcNow.AddSeconds(30);
-        while (DateTime.UtcNow < deadline)
-        {
-            if (await command.ExecuteScalarAsync() is "Lock")
-            {
-                return;
-            }
-
-            await Task.Delay(20);
-        }
-
-        Assert.Fail("The second transaction did not start waiting for the rate lock.");
     }
 
     private async Task<int> CountBookingsAsync(TestHotel hotel)
