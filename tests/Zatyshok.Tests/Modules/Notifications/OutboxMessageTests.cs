@@ -8,23 +8,17 @@ public class OutboxMessageTests
 {
     private static readonly DateTime Now = new(2026, 10, 20, 9, 0, 0, DateTimeKind.Utc);
 
-    private static OutboxMessage NewMessage() => new()
-    {
-        Type = "BookingConfirmed",
-        Recipient = "guest@example.com",
-        Subject = "Бронювання підтверджено",
-        Body = "Дякуємо за бронювання",
-    };
+    private static OutboxMessage NewMessage() => new(
+        "BookingConfirmed", "guest@example.com", "Бронювання підтверджено", "Дякуємо за бронювання", Now);
 
     [Fact]
     public void NewMessageIsPendingAndDueNow()
     {
-        var before = DateTime.UtcNow;
         var message = NewMessage();
 
         Assert.Equal(OutboxMessageStatus.Pending, message.Status);
         Assert.Equal(0, message.AttemptCount);
-        Assert.InRange(message.NextAttemptAtUtc, before, DateTime.UtcNow);
+        Assert.Equal((Now, Now), (message.CreatedAtUtc, message.NextAttemptAtUtc));
     }
 
     [Fact]

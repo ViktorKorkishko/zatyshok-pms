@@ -18,38 +18,68 @@ public class OutboxMessage
     /// <summary>Delay after the first failure; it doubles after each next one.</summary>
     public static readonly TimeSpan DefaultRetryDelay = TimeSpan.FromMinutes(1);
 
+    // For EF Core.
+    private OutboxMessage()
+    {
+    }
+
+    /// <summary>
+    /// Queues an email in the Pending state, due at once (table 12.28). <paramref name="nowUtc"/>
+    /// is the time of the business change, passed by the service as for the other entities.
+    /// </summary>
+    public OutboxMessage(
+        string type,
+        string recipient,
+        string subject,
+        string body,
+        DateTime nowUtc,
+        string? relatedEntityType = null,
+        Guid? relatedEntityId = null,
+        string? deduplicationKey = null)
+    {
+        Type = type;
+        Recipient = recipient;
+        Subject = subject;
+        Body = body;
+        RelatedEntityType = relatedEntityType;
+        RelatedEntityId = relatedEntityId;
+        DeduplicationKey = deduplicationKey;
+        CreatedAtUtc = nowUtc;
+        NextAttemptAtUtc = nowUtc;
+    }
+
     public Guid Id { get; set; } = Guid.NewGuid();
 
     /// <summary>Kind of the email, e.g. BookingConfirmed, ArrivalReminder, PasswordReset.</summary>
-    public required string Type { get; set; }
+    public string Type { get; private set; } = null!;
 
-    public required string Recipient { get; set; }
+    public string Recipient { get; private set; } = null!;
 
-    public required string Subject { get; set; }
+    public string Subject { get; private set; } = null!;
 
     /// <summary>Text from the template (UC-22); cleared after sending for emails with tokens (12.8.5).</summary>
-    public required string Body { get; set; }
+    public string Body { get; set; } = null!;
 
     public OutboxMessageStatus Status { get; private set; } = OutboxMessageStatus.Pending;
 
     public int AttemptCount { get; private set; }
 
     /// <summary>The Worker picks Pending messages whose time has come.</summary>
-    public DateTime NextAttemptAtUtc { get; private set; } = DateTime.UtcNow;
+    public DateTime NextAttemptAtUtc { get; private set; }
 
     public string? LastError { get; private set; }
 
-    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAtUtc { get; private set; }
 
     public DateTime? SentAtUtc { get; private set; }
 
     /// <summary>Type of the related entity, e.g. Booking; a logical link without a foreign key.</summary>
-    public string? RelatedEntityType { get; set; }
+    public string? RelatedEntityType { get; private set; }
 
-    public Guid? RelatedEntityId { get; set; }
+    public Guid? RelatedEntityId { get; private set; }
 
     /// <summary>Unique key against duplicates, e.g. "ArrivalReminder:{BookingId}:{CheckInDate}" (FR-40).</summary>
-    public string? DeduplicationKey { get; set; }
+    public string? DeduplicationKey { get; private set; }
 
     /// <summary>Pending → Sent: the mail server accepted the message.</summary>
     public void MarkSent(DateTime nowUtc)
