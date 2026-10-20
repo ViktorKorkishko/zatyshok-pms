@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Zatyshok.Domain.Modules.Guests;
+using Zatyshok.Domain.Modules.Identity;
 using Zatyshok.Domain.Modules.Rooms;
 
 namespace Zatyshok.Infrastructure.Persistence;
@@ -22,6 +24,18 @@ public class ZatyshokDbContext(DbContextOptions<ZatyshokDbContext> options) : Db
     public DbSet<SeasonRate> SeasonRates => Set<SeasonRate>();
 
     public DbSet<Service> Services => Set<Service>();
+
+    public DbSet<Role> Roles => Set<Role>();
+
+    public DbSet<User> Users => Set<User>();
+
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    public DbSet<AccountToken> AccountTokens => Set<AccountToken>();
+
+    public DbSet<Guest> Guests => Set<Guest>();
+
+    public DbSet<CorporateClient> CorporateClients => Set<CorporateClient>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
