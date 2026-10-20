@@ -30,7 +30,7 @@ public class ReportingViewTests(PostgresDatabaseFixture database) : IClassFixtur
         await using var db = database.CreateDbContext();
 
         // Standard: two working rooms. Suite: its only room is out of order, but the category is
-        // still sold (it has a rate) and has a confirmed booking for tonight.
+        // still sold (it has a rate) and has a confirmed booking for tonight and the next night.
         var hotel = await TestData.CreateHotelAsync(db, roomCount: 2);
         var suite = TestData.NewCategory("Suite");
         var suiteRoom = TestData.NewRoom(hotel.Hotel, suite, "301");
@@ -39,18 +39,20 @@ public class ReportingViewTests(PostgresDatabaseFixture database) : IClassFixtur
         db.Rates.Add(new Rate { HotelId = hotel.Hotel.Id, RoomCategoryId = suite.Id, BasePricePerNight = 6000m });
         db.Rooms.Add(suiteRoom);
 
+        // Two nights, so that the first night of the view is booked even if local midnight passes
+        // before the query and the view starts a day later.
         var kyivToday = hotel.Today;
-        var suiteBooking = TestData.NewBooking(hotel.Hotel, suite, hotel.Guest, kyivToday);
+        var suiteBooking = TestData.NewBooking(hotel.Hotel, suite, hotel.Guest, kyivToday, nights: 2);
         suiteBooking.Confirm(null, DateTime.UtcNow);
         db.Bookings.Add(suiteBooking);
         await db.SaveChangesAsync();
 
         var rows = await ReadAvailabilityAsync(hotel.Hotel.Id);
 
-        // 366 nights per category, starting at the current date in Europe/Kyiv (NFR-20). The
-        // date is read again after the query in case the test ran across local midnight.
+        // 366 nights per category, starting at the current date in Europe/Kyiv (NFR-20): the date
+        // before the query, or the next one if the test ran across local midnight.
         var firstNight = rows.Min(r => r.Night);
-        Assert.Contains(firstNight, new[] { kyivToday, hotel.Today });
+        Assert.Contains(firstNight, new[] { kyivToday, kyivToday.AddDays(1) });
         Assert.Equal(366, rows.Count(r => r.CategoryId == hotel.Category.Id));
         Assert.Equal(366, rows.Count(r => r.CategoryId == suite.Id));
 
@@ -69,9 +71,10 @@ public class ReportingViewTests(PostgresDatabaseFixture database) : IClassFixtur
         var hotel = await TestData.CreateHotelAsync(db, roomCount: 2);
         var room = hotel.Rooms[0];
 
-        var booking = TestData.NewBooking(hotel, hotel.Today, nights: 2);
+        var today = hotel.Today;
+        var booking = TestData.NewBooking(hotel, today, nights: 2);
         booking.Confirm(null, DateTime.UtcNow);
-        booking.CheckIn(room.Id, room.RoomCategoryId, hotel.Today, null, DateTime.UtcNow);
+        booking.CheckIn(room.Id, room.RoomCategoryId, today, null, DateTime.UtcNow);
         room.Occupy(reservedForThisBooking: false);
         db.Bookings.Add(booking);
 

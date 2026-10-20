@@ -12,7 +12,10 @@ namespace Zatyshok.Tests.Integration;
 /// <summary>A saved hotel in Europe/Kyiv with one category, its rate, rooms and a guest.</summary>
 internal sealed record TestHotel(Hotel Hotel, RoomCategory Category, Rate Rate, IReadOnlyList<Room> Rooms, Guest Guest)
 {
-    /// <summary>Current calendar date of the hotel (NFR-20).</summary>
+    /// <summary>
+    /// Current calendar date of the hotel (NFR-20), read from the clock on every call. A test reads it
+    /// once into a variable: two reads may fall on both sides of midnight in Kyiv.
+    /// </summary>
     public DateOnly Today => Hotel.GetLocalDate(DateTime.UtcNow);
 }
 
@@ -90,9 +93,10 @@ internal static class TestData
     /// <summary>A Confirmed booking with the room pre-assigned; <paramref name="hotel"/>'s today is the check-in date (FR-19).</summary>
     public static Booking ConfirmedWithRoom(TestHotel hotel, Room room)
     {
-        var booking = NewBooking(hotel, hotel.Today);
+        var today = hotel.Today;
+        var booking = NewBooking(hotel, today);
         booking.Confirm(null, DateTime.UtcNow);
-        booking.AssignRoom(room.Id, room.RoomCategoryId, hotel.Today, null, DateTime.UtcNow);
+        booking.AssignRoom(room.Id, room.RoomCategoryId, today, null, DateTime.UtcNow);
         return booking;
     }
 

@@ -38,7 +38,7 @@ public class PartialUniqueIndexTests(PostgresDatabaseFixture database) : IClassF
 
         // A completed booking keeps its RoomId for the history but is outside the index filter.
         var completed = TestData.ConfirmedWithRoom(hotel, room);
-        completed.CheckIn(room.Id, room.RoomCategoryId, hotel.Today, null, DateTime.UtcNow);
+        completed.CheckIn(room.Id, room.RoomCategoryId, completed.CheckInDate, null, DateTime.UtcNow);
         completed.CheckOut(null, DateTime.UtcNow);
         db.Bookings.Add(completed);
         await db.SaveChangesAsync();
