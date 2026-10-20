@@ -1336,6 +1336,17 @@ namespace Zatyshok.Infrastructure.Migrations
                 schema: "rooms",
                 newName: "Hotels",
                 newSchema: "public");
+
+            // Added by hand: EF generates no reverse operation for EnsureSchema.
+            // The schemas are empty at this point; DROP SCHEMA without CASCADE fails if anything is left.
+            migrationBuilder.DropSchema(name: "identity");
+            migrationBuilder.DropSchema(name: "audit");
+            migrationBuilder.DropSchema(name: "bookings");
+            migrationBuilder.DropSchema(name: "guests");
+            migrationBuilder.DropSchema(name: "rooms");
+            migrationBuilder.DropSchema(name: "housekeeping");
+            migrationBuilder.DropSchema(name: "billing");
+            migrationBuilder.DropSchema(name: "notifications");
         }
     }
 }
