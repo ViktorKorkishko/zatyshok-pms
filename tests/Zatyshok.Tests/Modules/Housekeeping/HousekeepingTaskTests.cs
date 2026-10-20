@@ -60,7 +60,7 @@ public class HousekeepingTaskTests
         }
         else
         {
-            Assert.Throws<DomainException>(() => Actions[action](task));
+            Assert.Throws<InvalidTransitionException>(() => Actions[action](task));
             Assert.Equal(from, task.Status);
         }
     }
@@ -70,7 +70,7 @@ public class HousekeepingTaskTests
     {
         var task = TaskIn(HousekeepingTaskStatus.Assigned);
 
-        Assert.Throws<DomainException>(() => task.Complete(Now));
+        Assert.Throws<InvalidTransitionException>(() => task.Complete(Now));
     }
 
     [Fact]

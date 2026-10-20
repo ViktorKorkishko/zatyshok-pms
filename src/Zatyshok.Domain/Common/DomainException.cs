@@ -11,6 +11,6 @@ public class DomainException(string message) : Exception(message)
     /// Message for a forbidden transition of tables 12.25–12.28, e.g.
     /// "Бронювання: дію «скасувати» заборонено в стані Completed."
     /// </summary>
-    public static DomainException InvalidTransition(string entity, object state, string action)
+    public static InvalidTransitionException InvalidTransition(string entity, object state, string action)
         => new($"{entity}: дію «{action}» заборонено в стані {state}.");
 }

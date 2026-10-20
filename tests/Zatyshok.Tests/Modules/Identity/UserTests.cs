@@ -55,7 +55,7 @@ public class UserTests
         }
         else
         {
-            Assert.Throws<DomainException>(() => Actions[action](user));
+            Assert.Throws<InvalidTransitionException>(() => Actions[action](user));
             Assert.Equal(from, user.Status);
         }
     }

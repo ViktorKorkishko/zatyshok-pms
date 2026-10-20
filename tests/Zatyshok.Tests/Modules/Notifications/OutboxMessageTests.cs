@@ -98,8 +98,8 @@ public class OutboxMessageTests
             message.MarkAttemptFailed("error", Now, maxAttempts: 1);
         }
 
-        Assert.Throws<DomainException>(() => message.MarkSent(Now));
-        Assert.Throws<DomainException>(() => message.MarkAttemptFailed("error", Now));
+        Assert.Throws<InvalidTransitionException>(() => message.MarkSent(Now));
+        Assert.Throws<InvalidTransitionException>(() => message.MarkAttemptFailed("error", Now));
         Assert.Equal(status, message.Status);
     }
 }

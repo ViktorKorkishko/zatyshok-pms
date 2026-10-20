@@ -85,15 +85,16 @@ public class Room
     /// <summary>Free or Dirty → OutOfOrder: a fault is registered (FR-30, UC-16).</summary>
     public void MarkOutOfOrder()
     {
+        // Forbidden transitions with an explanation of what to do instead.
         if (Status == RoomStatus.Occupied)
         {
-            throw new DomainException(
+            throw new InvalidTransitionException(
                 "Несправність у зайнятому номері записується в примітки номера; стан зміниться після виселення (UC-16 А1).");
         }
 
         if (Status == RoomStatus.Reserved)
         {
-            throw new DomainException("Спершу зніміть попереднє призначення номера.");
+            throw new InvalidTransitionException("Спершу зніміть попереднє призначення номера.");
         }
 
         EnsureStatus("вивести з експлуатації", RoomStatus.Free, RoomStatus.Dirty);

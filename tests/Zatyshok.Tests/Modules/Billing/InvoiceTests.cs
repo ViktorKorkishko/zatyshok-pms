@@ -314,7 +314,7 @@ public class InvoiceTests
             _ => throw new ArgumentOutOfRangeException(nameof(action)),
         };
 
-        Assert.Throws<DomainException>(act);
+        Assert.Throws<InvalidTransitionException>(act);
         Assert.Equal(InvoiceStatus.Voided, invoice.Status);
         invoice.RecalculateStatus();
         Assert.Equal(InvoiceStatus.Voided, invoice.Status);

@@ -3,7 +3,7 @@ using Zatyshok.Domain.Modules.Rooms;
 
 namespace Zatyshok.Tests.Modules.Rooms;
 
-/// <summary>Room state transitions of table 12.26: every (state, action) pair is either allowed or rejected.</summary>
+/// <summary>Room state transitions of table 12.26: every (state, action) pair is either allowed or rejected with <see cref="InvalidTransitionException"/>.</summary>
 public class RoomTransitionTests
 {
     private static readonly Dictionary<string, Action<Room>> Actions = new()
@@ -58,7 +58,7 @@ public class RoomTransitionTests
         }
         else
         {
-            Assert.Throws<DomainException>(() => Actions[action](room));
+            Assert.Throws<InvalidTransitionException>(() => Actions[action](room));
             Assert.Equal(from, room.Status);
         }
     }

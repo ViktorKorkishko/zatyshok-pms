@@ -6,7 +6,10 @@ namespace Zatyshok.Tests.Modules.Bookings;
 
 /// <summary>
 /// Table 12.25 as a matrix: every (state, method) pair is either allowed or rejected with
-/// <see cref="DomainException"/>, and a rejected call changes neither the state nor the history.
+/// <see cref="InvalidTransitionException"/>, and a rejected call changes neither the state nor the
+/// history. The exact exception type matters: a method may also throw a plain
+/// <see cref="DomainException"/> for another rule (for example, "the room is already assigned"),
+/// which would hide a missing state check.
 /// </summary>
 public class BookingTransitionTests
 {
@@ -45,8 +48,10 @@ public class BookingTransitionTests
                 }
             },
             b => b.UnassignRoom(OperatorId, Now)),
+        // Only the check-out date changes, so a room on the booking (CheckedIn, Completed) does not
+        // trigger the "remove the pre-assignment first" rule instead of the state check.
         ["ChangeDates"] = (null, b => b.ChangeDates(
-            CheckIn.AddDays(1), CheckOut.AddDays(1), Nights(CheckIn.AddDays(1), CheckOut.AddDays(1)), Deadline.AddDays(1), OperatorId, Now)),
+            CheckIn, CheckOut.AddDays(1), Nights(CheckIn, CheckOut.AddDays(1)), Deadline, OperatorId, Now)),
         ["ChangeCategory"] = (null, b => b.ChangeCategory(SuiteId, Nights(CheckIn, CheckOut, SuitePrice), OperatorId, Now)),
         ["ChangeGuestsCount"] = (null, b => b.ChangeGuestsCount(3, OperatorId, Now)),
         ["ChangeWishes"] = (null, b => b.ChangeWishes("Високий поверх", OperatorId, Now)),
@@ -96,7 +101,7 @@ public class BookingTransitionTests
         }
         else
         {
-            Assert.Throws<DomainException>(() => TransitionActions[action](booking));
+            Assert.Throws<InvalidTransitionException>(() => TransitionActions[action](booking));
 
             Assert.Equal(from, booking.Status);
             Assert.Equal(historyCount, booking.History.Count);
@@ -121,7 +126,7 @@ public class BookingTransitionTests
         }
         else
         {
-            Assert.Throws<DomainException>(() => act(booking));
+            Assert.Throws<InvalidTransitionException>(() => act(booking));
 
             Assert.Equal(status, booking.Status);
             Assert.Equal(historyCount, booking.History.Count);
@@ -137,7 +142,7 @@ public class BookingTransitionTests
         foreach (var action in TransitionActions.Values)
         {
             var booking = InStatus(status);
-            Assert.Throws<DomainException>(() => action(booking));
+            Assert.Throws<InvalidTransitionException>(() => action(booking));
         }
     }
 
