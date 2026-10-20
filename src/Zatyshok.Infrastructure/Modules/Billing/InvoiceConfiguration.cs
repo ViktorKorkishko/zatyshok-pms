@@ -30,7 +30,15 @@ public class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
 
         builder.Property(i => i.VoidReason).HasMaxLength(500);
 
-        // xmin as the concurrency token (see RoomConfiguration).
+        // xmin as the concurrency token (see RoomConfiguration). It protects only changes of the
+        // invoice row itself (Status, ClosedAtUtc, voiding): EF checks it in the UPDATE of Invoices.
+        // A payment or a line that leaves Status as it was only inserts a child row, the invoice row
+        // is not updated and xmin is not checked, so two payments at once could overpay the invoice.
+        // Payments and lines are therefore serialized by locking the invoice row first (listing 12.2),
+        // a required part of the T6 invoice service. The lock is a statement of its own,
+        // SELECT 1 … FOR UPDATE, and the invoice is loaded after it: a FromSql lock query that
+        // returns the invoice would load the auto-included Items and Payments in the same statement,
+        // as they were before the wait for the lock (InvoiceLockConcurrencyTests).
         builder.Property(i => i.Version).IsRowVersion();
 
         builder.HasIndex(i => i.Number).IsUnique();

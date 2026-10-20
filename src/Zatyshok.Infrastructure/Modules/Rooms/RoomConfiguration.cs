@@ -25,7 +25,9 @@ public class RoomConfiguration : IEntityTypeConfiguration<Room>
 
         // Optimistic concurrency: Version is the PostgreSQL system column xmin, so reception and
         // housekeeping changing the same room at once get a conflict (HTTP 409) instead of a lost
-        // update. The migration does not create the column: every PostgreSQL table already has it.
+        // update. EF adds "WHERE xmin = <value read>" to the UPDATE of the row. The column is never
+        // created: every PostgreSQL table already has it, so Npgsql generates no SQL for the xmin
+        // lines of the migrations.
         builder.Property(r => r.Version).IsRowVersion();
 
         // FR-06: the door number is unique within one hotel.

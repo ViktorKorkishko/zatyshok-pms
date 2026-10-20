@@ -48,7 +48,10 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.Property(b => b.Wishes).HasMaxLength(1000);
         builder.Property(b => b.CancellationReason).HasMaxLength(500);
 
-        // xmin as the concurrency token (see RoomConfiguration).
+        // xmin as the concurrency token (see RoomConfiguration). It protects only changes of the
+        // booking row itself: EF checks it in the UPDATE of Bookings. A call that only adds child rows
+        // (RecordPayment appends to History) updates no booking row, so nothing is checked; that is
+        // harmless here because such records do not depend on each other.
         builder.Property(b => b.Version).IsRowVersion();
 
         builder.HasIndex(b => b.Number).IsUnique();

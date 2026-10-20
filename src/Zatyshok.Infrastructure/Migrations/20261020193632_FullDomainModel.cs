@@ -72,6 +72,8 @@ namespace Zatyshok.Infrastructure.Migrations
                 schema: "billing",
                 startValue: 100001L);
 
+            // xmin is a PostgreSQL system column that every table already has (Room.Version, IsRowVersion):
+            // Npgsql generates no SQL for it here, in CreateTable and in Down; the lines stay as EF generated them.
             migrationBuilder.AddColumn<uint>(
                 name: "xmin",
                 schema: "rooms",
@@ -240,6 +242,7 @@ namespace Zatyshok.Infrastructure.Migrations
                     MustChangePassword = table.Column<bool>(type: "boolean", nullable: false),
                     LastLoginAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    // System column: no SQL is generated (see AddColumn "xmin" at the start of Up).
                     xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
@@ -381,6 +384,7 @@ namespace Zatyshok.Infrastructure.Migrations
                     CheckedOutAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    // System column: no SQL is generated (see AddColumn "xmin" at the start of Up).
                     xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
@@ -510,6 +514,7 @@ namespace Zatyshok.Infrastructure.Migrations
                     StartedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CompletedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CancelledAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    // System column: no SQL is generated (see AddColumn "xmin" at the start of Up).
                     xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
@@ -565,6 +570,7 @@ namespace Zatyshok.Infrastructure.Migrations
                     VoidedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     VoidedByUserId = table.Column<Guid>(type: "uuid", nullable: true),
                     VoidReason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    // System column: no SQL is generated (see AddColumn "xmin" at the start of Up).
                     xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
@@ -1271,6 +1277,7 @@ namespace Zatyshok.Infrastructure.Migrations
                 schema: "rooms",
                 table: "Hotels");
 
+            // System column: no SQL is generated, so the column stays in the table.
             migrationBuilder.DropColumn(
                 name: "xmin",
                 schema: "rooms",
