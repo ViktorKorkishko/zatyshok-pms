@@ -72,7 +72,7 @@ public class ReportingViewTests(PostgresDatabaseFixture database) : IClassFixtur
         var booking = TestData.NewBooking(hotel, hotel.Today, nights: 2);
         booking.Confirm(null, DateTime.UtcNow);
         booking.CheckIn(room.Id, room.RoomCategoryId, hotel.Today, null, DateTime.UtcNow);
-        room.Occupy();
+        room.Occupy(reservedForThisBooking: false);
         db.Bookings.Add(booking);
 
         var invoice = new Invoice(booking.Id, null, TestData.Nights(booking.CheckInDate, 2), DateTime.UtcNow);

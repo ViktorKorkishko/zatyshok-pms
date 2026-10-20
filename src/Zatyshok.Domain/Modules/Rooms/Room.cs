@@ -57,11 +57,22 @@ public class Room
         Status = RoomStatus.Free;
     }
 
-    /// <summary>Free or Reserved → Occupied: check-in (UC-12).</summary>
-    public void Occupy()
+    /// <summary>
+    /// Free or Reserved → Occupied: check-in (UC-12). A Reserved room may be occupied only by the
+    /// booking it is pre-assigned to (table 12.25: "Free, or Reserved for this booking"). The room
+    /// does not know its booking (the link is Bookings.RoomId in another module), so the caller passes
+    /// <paramref name="reservedForThisBooking"/> = <c>booking.RoomId == room.Id</c>, read before
+    /// <c>Booking.CheckIn</c>, because CheckIn sets RoomId.
+    /// </summary>
+    public void Occupy(bool reservedForThisBooking)
     {
         EnsureActive("заселити");
         EnsureStatus("заселити", RoomStatus.Free, RoomStatus.Reserved);
+        if (Status == RoomStatus.Reserved && !reservedForThisBooking)
+        {
+            throw new DomainException("Номер попередньо призначено іншому бронюванню.");
+        }
+
         Status = RoomStatus.Occupied;
     }
 

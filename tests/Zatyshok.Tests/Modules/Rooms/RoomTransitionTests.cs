@@ -10,7 +10,7 @@ public class RoomTransitionTests
     {
         ["Reserve"] = r => r.Reserve(),
         ["Release"] = r => r.Release(),
-        ["Occupy"] = r => r.Occupy(),
+        ["Occupy"] = r => r.Occupy(reservedForThisBooking: true),
         ["MarkDirty"] = r => r.MarkDirty(),
         ["MarkClean"] = r => r.MarkClean(),
         ["MarkOutOfOrder"] = r => r.MarkOutOfOrder(),
@@ -95,10 +95,33 @@ public class RoomTransitionTests
         room.Deactivate();
 
         Assert.Throws<DomainException>(room.Reserve);
-        Assert.Throws<DomainException>(room.Occupy);
+        Assert.Throws<DomainException>(() => room.Occupy(reservedForThisBooking: false));
 
         room.Activate();
-        room.Occupy();
+        room.Occupy(reservedForThisBooking: false);
+        Assert.Equal(RoomStatus.Occupied, room.Status);
+    }
+
+    [Fact]
+    public void ReservedRoomIsOccupiedOnlyByTheBookingItIsAssignedTo()
+    {
+        // Table 12.25: check-in to a room that is Free, or Reserved for this booking.
+        var room = RoomIn(RoomStatus.Reserved);
+
+        Assert.Throws<DomainException>(() => room.Occupy(reservedForThisBooking: false));
+        Assert.Equal(RoomStatus.Reserved, room.Status);
+
+        room.Occupy(reservedForThisBooking: true);
+        Assert.Equal(RoomStatus.Occupied, room.Status);
+    }
+
+    [Fact]
+    public void FreeRoomIsOccupiedWithoutPreAssignment()
+    {
+        var room = NewRoom();
+
+        room.Occupy(reservedForThisBooking: false);
+
         Assert.Equal(RoomStatus.Occupied, room.Status);
     }
 
@@ -125,10 +148,10 @@ public class RoomTransitionTests
                 room.Reserve();
                 break;
             case RoomStatus.Occupied:
-                room.Occupy();
+                room.Occupy(reservedForThisBooking: false);
                 break;
             case RoomStatus.Dirty:
-                room.Occupy();
+                room.Occupy(reservedForThisBooking: false);
                 room.MarkDirty();
                 break;
             case RoomStatus.OutOfOrder:

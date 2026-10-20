@@ -308,7 +308,8 @@ public class Booking
     /// Confirmed → CheckedIn (FR-19, UC-12): the check-in date is not later than the hotel's
     /// current date and the room is of the booked category. If a room was pre-assigned, it must be
     /// the same one. The caller has already checked the guest's document data (FR-23, figure 9.12),
-    /// moves the room to Occupied and opens or syncs the invoice.
+    /// moves the room to Occupied and opens or syncs the invoice. The room's state (Free, or
+    /// Reserved for this booking) is checked by <c>Room.Occupy</c>: the booking does not see the room.
     /// </summary>
     public void CheckIn(Guid roomId, Guid roomCategoryId, DateOnly hotelToday, Guid? authorUserId, DateTime nowUtc)
     {
