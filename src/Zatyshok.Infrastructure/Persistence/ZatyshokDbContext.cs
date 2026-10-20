@@ -6,7 +6,8 @@ namespace Zatyshok.Infrastructure.Persistence;
 
 /// <summary>
 /// Single database context of the modular monolith. Entity configurations live in
-/// Infrastructure/Modules/&lt;Name&gt; next to the module they belong to.
+/// Infrastructure/Modules/&lt;Name&gt; next to the module they belong to; each module keeps its
+/// tables in its own PostgreSQL schema (<see cref="Schemas"/>, report 2, table 12.1).
 /// </summary>
 public class ZatyshokDbContext(DbContextOptions<ZatyshokDbContext> options) : DbContext(options)
 {
@@ -19,6 +20,8 @@ public class ZatyshokDbContext(DbContextOptions<ZatyshokDbContext> options) : Db
     public DbSet<Rate> Rates => Set<Rate>();
 
     public DbSet<SeasonRate> SeasonRates => Set<SeasonRate>();
+
+    public DbSet<Service> Services => Set<Service>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
