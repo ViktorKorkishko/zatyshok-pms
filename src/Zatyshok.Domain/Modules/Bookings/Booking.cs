@@ -522,9 +522,21 @@ public class Booking
     {
         if (!allowed.Contains(Status))
         {
-            throw DomainException.InvalidTransition("Бронювання", Status, action);
+            throw DomainException.InvalidTransition("Бронювання", StatusName(Status), action);
         }
     }
+
+    // State names of figure 6.1 and FR-16 for error messages (NFR-13).
+    private static string StatusName(BookingStatus status) => status switch
+    {
+        BookingStatus.New => "нове",
+        BookingStatus.Confirmed => "підтверджене",
+        BookingStatus.CheckedIn => "гість заселений",
+        BookingStatus.Completed => "завершене",
+        BookingStatus.Cancelled => "скасоване",
+        BookingStatus.NoShow => "неявка",
+        _ => status.ToString(),
+    };
 
     private void EnsureCheckInDay(DateOnly hotelToday)
     {

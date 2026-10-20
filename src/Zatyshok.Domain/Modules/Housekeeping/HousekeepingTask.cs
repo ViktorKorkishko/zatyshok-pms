@@ -144,7 +144,18 @@ public class HousekeepingTask
     {
         if (!allowed.Contains(Status))
         {
-            throw DomainException.InvalidTransition("Завдання на прибирання", Status, action);
+            throw DomainException.InvalidTransition("Завдання на прибирання", StatusName(Status), action);
         }
     }
+
+    // State names of table 6.1 for error messages (NFR-13).
+    private static string StatusName(HousekeepingTaskStatus status) => status switch
+    {
+        HousekeepingTaskStatus.New => "нове",
+        HousekeepingTaskStatus.Assigned => "призначене",
+        HousekeepingTaskStatus.InProgress => "в роботі",
+        HousekeepingTaskStatus.Done => "виконано",
+        HousekeepingTaskStatus.Cancelled => "скасоване",
+        _ => status.ToString(),
+    };
 }

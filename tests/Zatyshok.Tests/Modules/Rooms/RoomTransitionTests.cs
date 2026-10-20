@@ -58,7 +58,8 @@ public class RoomTransitionTests
         }
         else
         {
-            Assert.Throws<InvalidTransitionException>(() => Actions[action](room));
+            var error = Assert.Throws<InvalidTransitionException>(() => Actions[action](room));
+            Assert.DoesNotContain(from.ToString(), error.Message);
             Assert.Equal(from, room.Status);
         }
     }

@@ -85,7 +85,16 @@ public class OutboxMessage
     {
         if (Status != OutboxMessageStatus.Pending)
         {
-            throw DomainException.InvalidTransition("Лист", Status, action);
+            throw DomainException.InvalidTransition("Лист", StatusName(Status), action);
         }
     }
+
+    // State names for error messages (NFR-13).
+    private static string StatusName(OutboxMessageStatus status) => status switch
+    {
+        OutboxMessageStatus.Pending => "очікує надсилання",
+        OutboxMessageStatus.Sent => "надіслано",
+        OutboxMessageStatus.Failed => "не доставлено",
+        _ => status.ToString(),
+    };
 }

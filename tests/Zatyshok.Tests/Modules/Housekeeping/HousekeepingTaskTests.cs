@@ -60,7 +60,8 @@ public class HousekeepingTaskTests
         }
         else
         {
-            Assert.Throws<InvalidTransitionException>(() => Actions[action](task));
+            var error = Assert.Throws<InvalidTransitionException>(() => Actions[action](task));
+            Assert.DoesNotContain(from.ToString(), error.Message);
             Assert.Equal(from, task.Status);
         }
     }

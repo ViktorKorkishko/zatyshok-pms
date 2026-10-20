@@ -166,7 +166,16 @@ public class User
     {
         if (Status != allowed)
         {
-            throw DomainException.InvalidTransition("Обліковий запис", Status, action);
+            throw DomainException.InvalidTransition("Обліковий запис", StatusName(Status), action);
         }
     }
+
+    // State names for error messages (NFR-13).
+    private static string StatusName(UserStatus status) => status switch
+    {
+        UserStatus.PendingConfirmation => "очікує підтвердження пошти",
+        UserStatus.Active => "активний",
+        UserStatus.Blocked => "заблокований",
+        _ => status.ToString(),
+    };
 }

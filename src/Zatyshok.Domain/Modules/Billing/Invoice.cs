@@ -271,7 +271,8 @@ public class Invoice
     {
         if (Status == InvoiceStatus.Voided)
         {
-            throw DomainException.InvalidTransition("Рахунок", Status, action);
+            // Voided is the only state that forbids actions; its name is from table 6.1 (NFR-13).
+            throw DomainException.InvalidTransition("Рахунок", "анульований", action);
         }
     }
 

@@ -314,7 +314,8 @@ public class InvoiceTests
             _ => throw new ArgumentOutOfRangeException(nameof(action)),
         };
 
-        Assert.Throws<InvalidTransitionException>(act);
+        var error = Assert.Throws<InvalidTransitionException>(act);
+        Assert.Contains("«анульований»", error.Message);
         Assert.Equal(InvoiceStatus.Voided, invoice.Status);
         invoice.RecalculateStatus();
         Assert.Equal(InvoiceStatus.Voided, invoice.Status);

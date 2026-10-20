@@ -55,7 +55,8 @@ public class UserTests
         }
         else
         {
-            Assert.Throws<InvalidTransitionException>(() => Actions[action](user));
+            var error = Assert.Throws<InvalidTransitionException>(() => Actions[action](user));
+            Assert.DoesNotContain(from.ToString(), error.Message);
             Assert.Equal(from, user.Status);
         }
     }

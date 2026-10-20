@@ -9,8 +9,10 @@ public class DomainException(string message) : Exception(message)
 {
     /// <summary>
     /// Message for a forbidden transition of tables 12.25–12.28, e.g.
-    /// "Бронювання: дію «скасувати» заборонено в стані Completed."
+    /// "Бронювання: дію «скасувати» заборонено в стані «завершене»." The state is passed by its
+    /// Ukrainian name from report 1 (figures 6.1–6.2, table 6.1), not the enum name, because the
+    /// message is shown to the user (NFR-13).
     /// </summary>
-    public static InvalidTransitionException InvalidTransition(string entity, object state, string action)
-        => new($"{entity}: дію «{action}» заборонено в стані {state}.");
+    public static InvalidTransitionException InvalidTransition(string entity, string stateName, string action)
+        => new($"{entity}: дію «{action}» заборонено в стані «{stateName}».");
 }

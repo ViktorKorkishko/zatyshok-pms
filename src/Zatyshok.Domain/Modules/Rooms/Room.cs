@@ -134,7 +134,18 @@ public class Room
     {
         if (!allowed.Contains(Status))
         {
-            throw DomainException.InvalidTransition("Номер", Status, action);
+            throw DomainException.InvalidTransition("Номер", StatusName(Status), action);
         }
     }
+
+    // State names of figure 6.2 and FR-19, FR-20 for error messages (NFR-13).
+    private static string StatusName(RoomStatus status) => status switch
+    {
+        RoomStatus.Free => "вільний",
+        RoomStatus.Reserved => "заброньований",
+        RoomStatus.Occupied => "зайнятий",
+        RoomStatus.Dirty => "потребує прибирання",
+        RoomStatus.OutOfOrder => "на ремонті",
+        _ => status.ToString(),
+    };
 }

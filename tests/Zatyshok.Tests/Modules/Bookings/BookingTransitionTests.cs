@@ -101,8 +101,10 @@ public class BookingTransitionTests
         }
         else
         {
-            Assert.Throws<InvalidTransitionException>(() => TransitionActions[action](booking));
+            var error = Assert.Throws<InvalidTransitionException>(() => TransitionActions[action](booking));
 
+            // The message names the state in Ukrainian, not by the enum name (NFR-13).
+            Assert.DoesNotContain(from.ToString(), error.Message);
             Assert.Equal(from, booking.Status);
             Assert.Equal(historyCount, booking.History.Count);
         }
@@ -126,8 +128,9 @@ public class BookingTransitionTests
         }
         else
         {
-            Assert.Throws<InvalidTransitionException>(() => act(booking));
+            var error = Assert.Throws<InvalidTransitionException>(() => act(booking));
 
+            Assert.DoesNotContain(status.ToString(), error.Message);
             Assert.Equal(status, booking.Status);
             Assert.Equal(historyCount, booking.History.Count);
         }
@@ -144,6 +147,16 @@ public class BookingTransitionTests
             var booking = InStatus(status);
             Assert.Throws<InvalidTransitionException>(() => action(booking));
         }
+    }
+
+    [Fact]
+    public void ForbiddenTransitionMessageNamesTheStateInUkrainian()
+    {
+        var booking = InStatus(BookingStatus.Completed);
+
+        var error = Assert.Throws<InvalidTransitionException>(() => booking.Cancel("Причина", byGuest: false, OperatorId, Now));
+
+        Assert.Equal("Бронювання: дію «скасувати» заборонено в стані «завершене».", error.Message);
     }
 
     private static TheoryData<BookingStatus, string> Pairs(IEnumerable<string> actions)
