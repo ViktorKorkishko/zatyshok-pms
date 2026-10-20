@@ -297,9 +297,12 @@ public class BookingRulesTests
         // UC-17: "дата виїзду: 12.11 → 14.11" is stored as FieldChanged with ISO dates.
         var records = booking.History.Skip(historyCount).ToList();
         Assert.All(records, r => Assert.Equal(BookingHistoryEventType.FieldChanged, r.EventType));
-        Assert.Equal(["CheckInDate", "CheckOutDate", "TotalPrice"], records.Select(r => r.FieldName));
+        Assert.Equal(["CheckInDate", "CheckOutDate", "TotalPrice", "FreeCancellationUntilUtc"], records.Select(r => r.FieldName));
         Assert.Equal(("2026-11-12", "2026-11-14"), (records[1].OldValue, records[1].NewValue));
         Assert.Equal(("5000.00", "6000.00"), (records[2].OldValue, records[2].NewValue));
+
+        // The free cancellation deadline (FR-15) as a UTC moment in ISO format.
+        Assert.Equal(("2026-11-09T16:00:00Z", "2026-11-10T16:00:00Z"), (records[3].OldValue, records[3].NewValue));
     }
 
     [Fact]

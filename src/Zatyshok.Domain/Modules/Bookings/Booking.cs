@@ -224,12 +224,16 @@ public class Booking
         var oldCheckIn = CheckInDate;
         var oldCheckOut = CheckOutDate;
         var oldTotal = TotalPrice;
+        var oldDeadline = FreeCancellationUntilUtc;
         SetNights(checkInDate, checkOutDate, nights);
         FreeCancellationUntilUtc = freeCancellationUntilUtc;
 
         RecordChange(nameof(CheckInDate), oldCheckIn, CheckInDate, null, authorUserId, nowUtc);
         RecordChange(nameof(CheckOutDate), oldCheckOut, CheckOutDate, null, authorUserId, nowUtc);
         RecordChange(nameof(TotalPrice), oldTotal, TotalPrice, null, authorUserId, nowUtc);
+
+        // The guest's right to cancel free of charge (FR-15) moves with the dates, so it is in the history too.
+        RecordChange(nameof(FreeCancellationUntilUtc), oldDeadline, FreeCancellationUntilUtc, null, authorUserId, nowUtc);
     }
 
     /// <summary>
@@ -521,11 +525,13 @@ public class Booking
         DateTime nowUtc)
         => _history.Add(new BookingHistory(Id, eventType, fieldName, oldValue, newValue, comment, authorUserId, nowUtc));
 
-    // History values are culture-independent text: dates as 2026-10-12, money as 2500.00 (UC-17).
+    // History values are culture-independent text (UC-17): dates as 2026-10-12, moments in UTC as
+    // 2026-11-09T16:00:00Z, money as 2500.00.
     private static string? Format(object? value) => value switch
     {
         null => null,
         DateOnly date => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+        DateTime moment => moment.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture),
         decimal money => money.ToString("0.00", CultureInfo.InvariantCulture),
         IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
         _ => value.ToString(),
