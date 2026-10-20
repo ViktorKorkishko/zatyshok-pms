@@ -1,18 +1,32 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Zatyshok.Domain.Modules.Guests;
+using Zatyshok.Domain.Modules.Identity;
 using Zatyshok.Domain.Modules.Rooms;
 
 namespace Zatyshok.Infrastructure.Persistence;
 
 /// <summary>
-/// Fills an empty Development database with the «Затишок» network from docs/02
-/// (table 5.1): 5 hotels, 3 network-wide categories, 5 rooms per hotel, a rate for
-/// every (hotel, category) pair and two seasonal periods. Idempotent: does nothing
-/// when hotels already exist. Every id is deterministic so that manual Swagger
-/// checks and integration tests can reference the same data across database resets.
+/// Fills an empty Development database with demo data:
+/// <list type="bullet">
+/// <item>the «Затишок» network from docs/02 (table 5.1): 5 hotels, 3 network-wide categories,
+/// 5 rooms per hotel, a rate for every (hotel, category) pair and two seasonal periods;</item>
+/// <item>3 services of the catalog;</item>
+/// <item>one user for each of the 9 roles, 3 guests and 1 corporate client.</item>
+/// </list>
+/// The roles themselves are not seeded here: they come with the migration (HasData in RoleConfiguration).
+/// Idempotent: each part does nothing when its table already has rows, so a database seeded in T1
+/// gets only the new parts. Every id is deterministic so that manual Swagger checks and integration
+/// tests can reference the same data across database resets.
 /// </summary>
 public static class DevelopmentDataSeeder
 {
+    /// <summary>
+    /// Placeholder for Users.PasswordHash until password hashing comes in T4. It is not a valid
+    /// hash of any password, so no seeded account can sign in yet.
+    /// </summary>
+    public const string UnusablePasswordHash = "!unusable: password hashing comes in T4";
+
     private static readonly Guid StandardId = Guid.Parse("11111111-1111-1111-1111-111111111101");
     private static readonly Guid SuperiorId = Guid.Parse("11111111-1111-1111-1111-111111111102");
     private static readonly Guid SuiteId = Guid.Parse("11111111-1111-1111-1111-111111111103");
@@ -23,6 +37,8 @@ public static class DevelopmentDataSeeder
     private static readonly Guid DniproId = Guid.Parse("22222222-2222-2222-2222-222222222204");
     private static readonly Guid KarpatyId = Guid.Parse("22222222-2222-2222-2222-222222222205");
 
+    private static readonly Guid CorporateClientId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa01");
+
     // Deterministic ids for the seeded rows: the last four digits are <hotel index:2><ordinal:2>.
     // Both parts have a fixed width (D2), so the last group always has 12 digits, even for a
     // hotel with 10 or more rooms (without D2 Guid.Parse failed there).
@@ -32,11 +48,27 @@ public static class DevelopmentDataSeeder
     internal static Guid RateId(int hotelIndex, int categoryIndex)
         => Guid.Parse($"44444444-4444-4444-4444-44444444{hotelIndex:D2}{categoryIndex:D2}");
 
+    // The same fixed width for the other seeded rows: the last two digits are the ordinal.
+    // A user gets the number of its role (01 Guest ... 09 Administrator, as in RoleConfiguration).
+    internal static Guid UserId(int number) => Guid.Parse($"77777777-7777-7777-7777-7777777777{number:D2}");
+
+    internal static Guid ServiceId(int number) => Guid.Parse($"88888888-8888-8888-8888-8888888888{number:D2}");
+
+    internal static Guid GuestId(int number) => Guid.Parse($"99999999-9999-9999-9999-9999999999{number:D2}");
+
     public static async Task SeedAsync(ZatyshokDbContext db, ILogger logger, CancellationToken cancellationToken = default)
+    {
+        await SeedRoomsAsync(db, logger, cancellationToken);
+        await SeedServicesAsync(db, logger, cancellationToken);
+        await SeedPeopleAsync(db, logger, cancellationToken);
+    }
+
+    /// <summary>Hotels, categories, rooms, rates and seasonal periods (the T1 seed).</summary>
+    private static async Task SeedRoomsAsync(ZatyshokDbContext db, ILogger logger, CancellationToken cancellationToken)
     {
         if (await db.Hotels.AnyAsync(cancellationToken))
         {
-            logger.LogInformation("Development seed skipped: hotels already exist");
+            logger.LogInformation("Development seed of hotels skipped: hotels already exist");
             return;
         }
 
@@ -124,7 +156,152 @@ public static class DevelopmentDataSeeder
         await db.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation(
-            "Development seed done: {Hotels} hotels, {Categories} categories, {Rooms} rooms, {Rates} rates, {SeasonRates} season rates",
+            "Development seed of hotels done: {Hotels} hotels, {Categories} categories, {Rooms} rooms, {Rates} rates, {SeasonRates} season rates",
             hotels.Length, categories.Length, rooms.Count, rates.Count, seasonRates.Length);
+    }
+
+    /// <summary>Extra services of the network-wide catalog (FR-32).</summary>
+    private static async Task SeedServicesAsync(ZatyshokDbContext db, ILogger logger, CancellationToken cancellationToken)
+    {
+        if (await db.Services.AnyAsync(cancellationToken))
+        {
+            logger.LogInformation("Development seed of services skipped: services already exist");
+            return;
+        }
+
+        var services = new[]
+        {
+            new Service { Id = ServiceId(1), Name = "Сніданок", Description = "Сніданок «шведський стіл» для одного гостя", Price = 350m },
+            new Service { Id = ServiceId(2), Name = "Паркування", Description = "Місце на охоронюваній парковці готелю, за добу", Price = 200m },
+            new Service { Id = ServiceId(3), Name = "Трансфер", Description = "Трансфер з вокзалу або аеропорту до готелю в один бік", Price = 900m },
+        };
+
+        db.Services.AddRange(services);
+        await db.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation("Development seed of services done: {Services} services", services.Length);
+    }
+
+    /// <summary>
+    /// One user for each role, three guests and a corporate client. They are saved together:
+    /// the first guest is linked to the guest user.
+    /// </summary>
+    private static async Task SeedPeopleAsync(ZatyshokDbContext db, ILogger logger, CancellationToken cancellationToken)
+    {
+        if (await db.Users.AnyAsync(cancellationToken))
+        {
+            logger.LogInformation("Development seed of users skipped: users already exist");
+            return;
+        }
+
+        // The roles come from the migration; their ids are looked up by code.
+        var roleIds = await db.Roles.ToDictionaryAsync(r => r.Code, r => r.Id, cancellationToken);
+        var now = DateTime.UtcNow;
+
+        // A guest registered on the portal who has already confirmed the email (UC-01).
+        var guestUser = User.RegisterGuest("ivan.petrenko@example.com", UnusablePasswordHash, roleIds[RoleCodes.Guest], now);
+        guestUser.Id = UserId(1);
+        guestUser.ConfirmEmail();
+
+        // Creates a staff account with a fixed id.
+        User Staff(int number, string email, string fullName, string roleCode, Guid? hotelId)
+        {
+            var user = User.CreateStaff(email, UnusablePasswordHash, fullName, roleIds[roleCode], hotelId, now);
+            user.Id = UserId(number);
+
+            // Demo accounts are not asked to change the password at the first login.
+            user.MustChangePassword = false;
+            return user;
+        }
+
+        // Staff: roles bound to a hotel work in Kyiv, the others see the whole network (FR-02).
+        var users = new List<User>
+        {
+            guestUser,
+            Staff(2, "receptionist@zatyshok.ua", "Мельник Оксана Петрівна", RoleCodes.Receptionist, KyivId),
+            Staff(3, "reservations@zatyshok.ua", "Шевчук Андрій Іванович", RoleCodes.ReservationAgent, null),
+            Staff(4, "housekeeper@zatyshok.ua", "Бондар Галина Степанівна", RoleCodes.Housekeeper, KyivId),
+            Staff(5, "head.housekeeper@zatyshok.ua", "Кравчук Наталія Василівна", RoleCodes.HeadHousekeeper, KyivId),
+            Staff(6, "manager@zatyshok.ua", "Ткаченко Дмитро Олегович", RoleCodes.HotelManager, KyivId),
+            Staff(7, "accountant@zatyshok.ua", "Савченко Ірина Михайлівна", RoleCodes.Accountant, null),
+            Staff(8, "executive@zatyshok.ua", "Лисенко Сергій Володимирович", RoleCodes.Executive, null),
+            Staff(9, "admin@zatyshok.ua", "Романенко Тарас Юрійович", RoleCodes.Administrator, null),
+        };
+
+        var guests = new[]
+        {
+            // Has an account but no document yet: check-in must ask for it (FR-23, UC-12 A3).
+            new Guest
+            {
+                Id = GuestId(1),
+                UserId = guestUser.Id,
+                LastName = "Петренко",
+                FirstName = "Іван",
+                MiddleName = "Олександрович",
+                Phone = "+380671234567",
+                Email = guestUser.Email,
+                PersonalDataConsentAtUtc = now,
+                CreatedAtUtc = now,
+            },
+
+            // A regular guest created by an operator, with a document and wishes.
+            new Guest
+            {
+                Id = GuestId(2),
+                LastName = "Коваленко",
+                FirstName = "Олена",
+                MiddleName = "Миколаївна",
+                BirthDate = new DateOnly(1988, 3, 14),
+                Citizenship = "UA",
+                DocumentType = DocumentType.Passport,
+                DocumentNumber = "МК123456",
+                Phone = "+380501112233",
+                Email = "olena.kovalenko@example.com",
+                Preferences = "Високий поверх, тихий номер",
+                StaffNotes = "Постійна гостя, бронює через корпоративного клієнта",
+                PersonalDataConsentAtUtc = now,
+                CreatedAtUtc = now,
+            },
+
+            // A foreign guest: no middle name, a foreign passport.
+            new Guest
+            {
+                Id = GuestId(3),
+                LastName = "Smith",
+                FirstName = "John",
+                BirthDate = new DateOnly(1975, 11, 2),
+                Citizenship = "GB",
+                DocumentType = DocumentType.ForeignPassport,
+                DocumentNumber = "533380006",
+                Phone = "+447700900123",
+                Email = "john.smith@example.com",
+                PersonalDataConsentAtUtc = now,
+                CreatedAtUtc = now,
+            },
+        };
+
+        var corporateClient = new CorporateClient
+        {
+            Id = CorporateClientId,
+            Name = "ТОВ «Приклад Консалт»",
+            Edrpou = "12345678",
+            ContractNumber = "КД-2026/001",
+            ContractStartDate = new DateOnly(2026, 1, 1),
+            ContractEndDate = new DateOnly(2027, 12, 31),
+            PaymentDeferralDays = 14,
+            ContactPerson = "Гончаренко Марія Сергіївна",
+            ContactPhone = "+380442223344",
+            ContactEmail = "booking@pryklad-consult.example.com",
+            CreatedAtUtc = now,
+        };
+
+        db.Users.AddRange(users);
+        db.Guests.AddRange(guests);
+        db.CorporateClients.Add(corporateClient);
+        await db.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation(
+            "Development seed of people done: {Users} users, {Guests} guests, 1 corporate client",
+            users.Count, guests.Length);
     }
 }

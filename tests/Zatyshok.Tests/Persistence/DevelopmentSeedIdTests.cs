@@ -33,4 +33,16 @@ public class DevelopmentSeedIdTests
             }
         }
     }
+
+    [Fact]
+    public void UserServiceAndGuestIdsAreValidAndUniqueForTwoDigitNumbers()
+    {
+        var ids = new HashSet<Guid>();
+        for (var number = 1; number < 100; number++)
+        {
+            Assert.True(ids.Add(DevelopmentDataSeeder.UserId(number)), $"duplicate user id for {number}");
+            Assert.True(ids.Add(DevelopmentDataSeeder.ServiceId(number)), $"duplicate service id for {number}");
+            Assert.True(ids.Add(DevelopmentDataSeeder.GuestId(number)), $"duplicate guest id for {number}");
+        }
+    }
 }
