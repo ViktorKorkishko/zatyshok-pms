@@ -23,6 +23,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- DeployedDatabaseFixture runs the real roles and grants script. -->
+    <None Include="..\..\deploy\sql\roles-and-grants.sql" Link="deploy\sql\roles-and-grants.sql" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Zatyshok.Api\Zatyshok.Api.csproj" />
     <ProjectReference Include="..\..\src\Zatyshok.Domain\Zatyshok.Domain.csproj" />
     <ProjectReference Include="..\..\src\Zatyshok.Infrastructure\Zatyshok.Infrastructure.csproj" />
