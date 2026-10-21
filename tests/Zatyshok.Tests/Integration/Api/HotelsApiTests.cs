@@ -153,7 +153,29 @@ public class HotelsApiTests(ApiFixture api) : IClassFixture<ApiFixture>
 
         var problem = await Problem.ReadAsync(response, HttpStatusCode.BadRequest);
         Assert.NotEmpty(problem.Errors!);
+        Assert.All(problem.Errors!.Keys, key => Assert.DoesNotContain("$", key));
         Assert.All(problem.Errors!.Values.SelectMany(m => m), message => Assert.Matches("^[А-ЯІЇЄҐ]", message));
+    }
+
+    [Fact]
+    public async Task EmptyOrNonObjectBodyGivesAnErrorOfTheBody()
+    {
+        using var empty = new StringContent("", Encoding.UTF8, "application/json");
+        using var array = new StringContent("[1, 2]", Encoding.UTF8, "application/json");
+
+        var emptyProblem = await Problem.ReadAsync(await api.Client.PostAsync(Url, empty), HttpStatusCode.BadRequest);
+        var arrayProblem = await Problem.ReadAsync(await api.Client.PostAsync(Url, array), HttpStatusCode.BadRequest);
+
+        Assert.Equal("Тіло запиту не може бути порожнім.", Assert.Single(emptyProblem.Errors!["body"]));
+        Assert.Equal("Тіло запиту не є коректним JSON-об'єктом.", Assert.Single(arrayProblem.Errors!["body"]));
+    }
+
+    [Fact]
+    public async Task IdThatIsNotAGuidGives404WithADetail()
+    {
+        var problem = await Problem.ReadAsync(await api.Client.GetAsync($"{Url}/not-a-guid"), HttpStatusCode.NotFound);
+
+        Assert.Equal("За цією адресою нічого немає: перевірте шлях та ідентифікатор.", problem.Detail);
     }
 
     [Fact]
@@ -161,8 +183,11 @@ public class HotelsApiTests(ApiFixture api) : IClassFixture<ApiFixture>
     {
         var response = await api.Client.PostJsonAsync(Url, new { name = "Х", city = "Х", address = "Х", stars = "три", timeZoneId = "Europe/Kyiv" });
 
+        // The key is the name of the field, like the keys of the validators, not the JSON path "$.stars".
         var problem = await Problem.ReadAsync(response, HttpStatusCode.BadRequest);
-        Assert.Equal("Некоректне значення.", Assert.Single(problem.Errors!["$.stars"]));
+        Assert.Equal(
+            "Значення має інший тип або формат: числа — без лапок, дати — РРРР-ММ-ДД, час — ГГ:ХХ:СС.",
+            Assert.Single(problem.Errors!["stars"]));
     }
 
     [Fact]

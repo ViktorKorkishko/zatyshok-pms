@@ -25,6 +25,16 @@ public static class ProblemDetailsSetup
         [StatusCodes.Status500InternalServerError] = "Внутрішня помилка сервера",
     };
 
+    // Details for an error that comes without one: from routing or status code pages (e.g. 404 for a
+    // path that is not a route, such as /hotels/not-a-guid), MVC (415) or the exception handler (500).
+    private static readonly Dictionary<int, string> DefaultDetails = new()
+    {
+        [StatusCodes.Status404NotFound] = "За цією адресою нічого немає: перевірте шлях та ідентифікатор.",
+        [StatusCodes.Status405MethodNotAllowed] = "Цей метод не підтримується для цієї адреси.",
+        [StatusCodes.Status415UnsupportedMediaType] = "Тіло запиту має бути JSON (Content-Type: application/json).",
+        [StatusCodes.Status500InternalServerError] = "Сталася непередбачена помилка. Повідомте адміністратору correlationId.",
+    };
+
     /// <summary>The Ukrainian title of an error with this status code, or null for a code without one.</summary>
     public static string? TitleOf(int status) => Titles.GetValueOrDefault(status);
 
@@ -39,6 +49,11 @@ public static class ProblemDetailsSetup
             if (problem.Status is { } status && Titles.TryGetValue(status, out var title))
             {
                 problem.Title = title;
+            }
+
+            if (problem.Detail is null && problem.Status is { } code)
+            {
+                problem.Detail = DefaultDetails.GetValueOrDefault(code);
             }
 
             // The same id as in the X-Correlation-Id header and in the log, so a user can report it.

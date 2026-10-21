@@ -175,7 +175,10 @@ public class RequestValidatorTests
     [InlineData("Name", "name")]
     [InlineData("CheckInDate", "checkInDate")]
     [InlineData("Items[0].UnitPrice", "items[0].unitPrice")]
-    [InlineData("$.stars", "$.stars")]
+    [InlineData("$.stars", "stars")]
+    [InlineData("$.items[0].unitPrice", "items[0].unitPrice")]
+    [InlineData("$", "body")]
+    [InlineData("", "body")]
     public void ErrorKeysAreTheJsonNamesOfTheFields(string key, string expected)
     {
         Assert.Equal(expected, ValidationProblems.ToJsonName(key));
