@@ -26,7 +26,9 @@ public class RequestValidatorTests
     [InlineData(0, 20, false)]
     [InlineData(1, 0, false)]
     [InlineData(1, 101, false)]
-    public void PageStartsAt1AndHoldsAtMost100Rows(int page, int pageSize, bool valid)
+    [InlineData(1_000_000, 100, true)]
+    [InlineData(1_000_001, 100, false)]
+    public void PageIsFrom1To1000000AndHoldsAtMost100Rows(int page, int pageSize, bool valid)
     {
         var result = new PageQueryValidator().Validate(new PageQuery { Page = page, PageSize = pageSize });
 

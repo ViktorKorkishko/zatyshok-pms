@@ -43,6 +43,8 @@ public class HotelsApiTests(ApiFixture api) : IClassFixture<ApiFixture>
     [InlineData("pageSize=101", "pageSize")]
     [InlineData("pageSize=0", "pageSize")]
     [InlineData("page=0", "page")]
+    [InlineData("page=21474838&pageSize=100", "page")]
+    [InlineData("page=2147483647", "page")]
     public async Task InvalidPageGivesValidationProblem(string queryString, string field)
     {
         var response = await api.Client.GetAsync($"{Url}?{queryString}");

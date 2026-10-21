@@ -16,7 +16,14 @@ public class PageQuery
     /// <summary>Largest page; a client that needs more rows reads the next page.</summary>
     public const int MaxPageSize = 100;
 
-    /// <summary>Номер сторінки, починаючи з 1.</summary>
+    /// <summary>
+    /// Largest page number. The rows to skip, (page − 1) × pageSize, are an int in the query; without
+    /// this limit a large page number overflowed it, PostgreSQL got a negative OFFSET and the client 500
+    /// (Internal Server Error). A million pages of 100 rows is more than any list of the network holds (12.8.6).
+    /// </summary>
+    public const int MaxPage = 1_000_000;
+
+    /// <summary>Номер сторінки, від 1 до 1 000 000.</summary>
     /// <example>1</example>
     public int Page { get; init; } = 1;
 
@@ -35,7 +42,8 @@ public class PageQueryValidator : RequestValidator<PageQuery>
     public PageQueryValidator()
     {
         RuleFor(q => q.Page)
-            .GreaterThanOrEqualTo(1).WithMessage("Номер сторінки починається з 1.");
+            .GreaterThanOrEqualTo(1).WithMessage("Номер сторінки починається з 1.")
+            .LessThanOrEqualTo(PageQuery.MaxPage).WithMessage("Номер сторінки — не більше 1 000 000.");
         RuleFor(q => q.PageSize)
             .InclusiveBetween(1, PageQuery.MaxPageSize).WithMessage($"Розмір сторінки має бути від 1 до {PageQuery.MaxPageSize}.");
     }

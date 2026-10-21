@@ -19,8 +19,10 @@ public static class PagingExtensions
         this IOrderedQueryable<T> query, PageRequest page, CancellationToken cancellationToken)
     {
         var totalCount = await query.CountAsync(cancellationToken);
+        // checked: an overflow throws here instead of sending a negative OFFSET to PostgreSQL. The API
+        // keeps the page number small enough (PageQuery.MaxPage), so this is only a safety net.
         var items = await query
-            .Skip((page.Page - 1) * page.PageSize)
+            .Skip(checked((page.Page - 1) * page.PageSize))
             .Take(page.PageSize)
             .ToListAsync(cancellationToken);
 
