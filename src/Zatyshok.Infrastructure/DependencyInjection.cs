@@ -16,6 +16,10 @@ public static class DependencyInjection
         var connectionString = BuildConnectionString(configuration);
         services.AddDbContext<ZatyshokDbContext>(options => options.UseZatyshokNpgsql(connectionString));
 
+        // The clock of the services (shared core, figure 9.7): the current date of a hotel is read from it.
+        // The API tests replace it to fix "today".
+        services.AddSingleton(TimeProvider.System);
+
         // Application services of the modules (9.4.1); each module registers its own.
         services.AddRoomsModule();
         return services;
