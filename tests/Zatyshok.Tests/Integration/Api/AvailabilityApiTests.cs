@@ -90,6 +90,63 @@ public class AvailabilityApiTests(ApiFixture api) : IClassFixture<ApiFixture>
     }
 
     [Fact]
+    public async Task CheckInInThePastIsRejectedInACitySearchAsWell()
+    {
+        // 1 November 2026, noon in Kyiv: 31 October is over for the hotels of Kyiv. A city without hotels has
+        // no hotel date; at UTC−12 it is still 31 October (22:00), so only 30 October is surely in the past.
+        var client = ClientAt(November1);
+
+        var withHotels = await client.GetAsync($"{Url}?city=Київ&checkIn=2026-10-31&checkOut=2026-11-02&guests=2");
+        var withoutHotels = await client.GetAsync($"{Url}?city=Атлантида&checkIn=2026-10-30&checkOut=2026-11-02&guests=2");
+        var withoutHotelsStillToday = await client.GetAsync($"{Url}?city=Атлантида&checkIn=2026-10-31&checkOut=2026-11-02&guests=2");
+
+        Assert.StartsWith(
+            "Дата заїзду не може бути ранішою за поточну дату готелю",
+            Assert.Single((await Problem.ReadAsync(withHotels, HttpStatusCode.BadRequest)).Errors!["checkIn"]));
+        Assert.Equal(
+            "Дата заїзду (30.10.2026) уже минула.",
+            Assert.Single((await Problem.ReadAsync(withoutHotels, HttpStatusCode.BadRequest)).Errors!["checkIn"]));
+        Assert.Empty((await withoutHotelsStillToday.ReadAsync<AvailabilityResponse>()).Hotels);
+    }
+
+    [Fact]
+    public async Task CitySearchSkipsDeactivatedHotels()
+    {
+        var city = $"Місто {TestData.Unique()}";
+        var open = await CreateHotelAsync(roomCount: 1);
+        var closed = await CreateHotelAsync(roomCount: 1);
+        await using (var db = api.CreateDbContext())
+        {
+            await db.Hotels.Where(h => h.Id == open.Hotel.Id || h.Id == closed.Hotel.Id).ExecuteUpdateAsync(s => s.SetProperty(h => h.City, city));
+            await db.Hotels.Where(h => h.Id == closed.Hotel.Id).ExecuteUpdateAsync(s => s.SetProperty(h => h.IsActive, false));
+        }
+
+        var response = await Search(api.Client, $"city={city}&checkIn={open.Today.AddDays(1):yyyy-MM-dd}&checkOut={open.Today.AddDays(2):yyyy-MM-dd}&guests=1");
+
+        Assert.Equal(open.Hotel.Id, Assert.Single(response.Hotels).HotelId);
+    }
+
+    [Fact]
+    public async Task SearchWithoutACategorySkipsDeactivatedCategories()
+    {
+        // A second category with a room and a rate, deactivated: its rooms are not sold any more (UC-11).
+        var hotel = await CreateHotelAsync(roomCount: 1);
+        await using (var db = api.CreateDbContext())
+        {
+            var closed = TestData.NewCategory("Закрита");
+            closed.IsActive = false;
+            db.RoomCategories.Add(closed);
+            db.Rooms.Add(TestData.NewRoom(hotel.Hotel, closed, "901"));
+            db.Rates.Add(new Rate { HotelId = hotel.Hotel.Id, RoomCategoryId = closed.Id, BasePricePerNight = 1000m });
+            await db.SaveChangesAsync();
+        }
+
+        var category = await SearchOneCategoryAsync(hotel, hotel.Today.AddDays(1), hotel.Today.AddDays(2));
+
+        Assert.Equal(1, category.AvailableRooms);
+    }
+
+    [Fact]
     public async Task ExampleOf12_8_2GivesOneRoom()
     {
         // 2 rooms; confirmed bookings 10–12 and 12–14 (days from today); a search 10–14 gets one room

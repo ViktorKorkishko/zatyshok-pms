@@ -17,7 +17,8 @@ namespace Zatyshok.Infrastructure.Modules.Bookings;
 /// limited by the hotel scope: availability and prices are what the portal shows to anyone (FR-10).
 /// </para>
 /// </summary>
-internal sealed class AvailabilityService(ZatyshokDbContext db, IRoomCatalog catalog, IRoomInventory inventory) : IAvailabilityService
+internal sealed class AvailabilityService(ZatyshokDbContext db, IRoomCatalog catalog, IRoomInventory inventory, TimeProvider time)
+    : IAvailabilityService
 {
     private static readonly IReadOnlyDictionary<DateOnly, int> NoBookings = new Dictionary<DateOnly, int>();
 
@@ -27,6 +28,11 @@ internal sealed class AvailabilityService(ZatyshokDbContext db, IRoomCatalog cat
         foreach (var hotel in hotels)
         {
             EnsureCheckInIsNotInThePast(hotel, search.CheckIn);
+        }
+
+        if (hotels.Count == 0)
+        {
+            EnsureCheckInIsNotInThePastAnywhere(search.CheckIn);
         }
 
         var categories = await FindCategoriesAsync(search, cancellationToken);
@@ -90,7 +96,24 @@ internal sealed class AvailabilityService(ZatyshokDbContext db, IRoomCatalog cat
         }
     }
 
-    /// <summary>The asked category, or every active category that holds the guests (its base capacity, FR-05).</summary>
+    /// <summary>
+    /// The same rule (FR-10, UC-04 step 2) for a city without active hotels, which has no hotel date to compare
+    /// with: a date earlier than today at UTC−12, the last time zone to start a day, is in the past for every
+    /// hotel anywhere, while a later date may still be today for some hotel and is not rejected.
+    /// </summary>
+    private void EnsureCheckInIsNotInThePastAnywhere(DateOnly checkIn)
+    {
+        var earliestToday = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime.AddHours(-12));
+        if (checkIn < earliestToday)
+        {
+            throw new InvalidRequestException(nameof(AvailabilitySearch.CheckIn), $"Дата заїзду ({checkIn:dd.MM.yyyy}) уже минула.");
+        }
+    }
+
+    /// <summary>
+    /// The asked category, or every active category that holds the guests (its base capacity, FR-05). Every room
+    /// of a category holds at least its base capacity (RoomService), so the guests fit any room given out at check-in.
+    /// </summary>
     private async Task<IReadOnlyList<RoomCategoryInfo>> FindCategoriesAsync(AvailabilitySearch search, CancellationToken cancellationToken)
     {
         var all = await catalog.GetCategoriesAsync(cancellationToken);
