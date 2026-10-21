@@ -40,12 +40,24 @@ public class RoomCategoryService(ZatyshokDbContext db)
     }
 
     /// <summary>
-    /// Replaces the fields. The capacity is the default for new rooms; rooms keep their own capacity,
-    /// which may differ from the category's (FR-06).
+    /// Replaces the fields. The base capacity is what the search offers for the category and the default for
+    /// new rooms; a room may hold more, but not less (RoomService), so the base cannot grow above a room of
+    /// the category, active or not (a deactivated room may come back).
     /// </summary>
     public async Task<RoomCategory> UpdateAsync(Guid id, RoomCategoryData data, CancellationToken cancellationToken)
     {
         var category = await FindAsync(id, cancellationToken);
+        var smallerRooms = await db.Rooms
+            .Where(r => r.RoomCategoryId == id && r.Capacity < data.Capacity)
+            .Select(r => r.Capacity)
+            .ToListAsync(cancellationToken);
+        if (smallerRooms.Count > 0)
+        {
+            throw new DomainException(
+                $"Базову місткість не можна збільшити до {data.Capacity}: номерів категорії, що вміщують менше гостей, — " +
+                $"{smallerRooms.Count} (найменша місткість — {smallerRooms.Min()}). Спершу збільште місткість цих номерів.");
+        }
+
         Apply(category, data);
         await SaveAsync(category, cancellationToken);
         return category;

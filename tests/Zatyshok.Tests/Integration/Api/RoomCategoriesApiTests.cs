@@ -53,6 +53,26 @@ public class RoomCategoriesApiTests(ApiFixture api) : IClassFixture<ApiFixture>
     }
 
     [Fact]
+    public async Task BaseCapacityDoesNotGrowAboveARoomOfTheCategory()
+    {
+        // A TestData hotel: its category and its two rooms hold 2 guests.
+        TestHotel hotel;
+        await using (var db = api.CreateDbContext())
+        {
+            hotel = await TestData.CreateHotelAsync(db, roomCount: 2);
+        }
+
+        var url = $"{Url}/{hotel.Category.Id}";
+        var larger = await api.Client.PutJsonAsync(url, new { name = hotel.Category.Name, capacity = 3 });
+        var smaller = await api.Client.PutJsonAsync(url, new { name = hotel.Category.Name, capacity = 1 });
+
+        Assert.Equal(
+            "Базову місткість не можна збільшити до 3: номерів категорії, що вміщують менше гостей, — 2 (найменша місткість — 2). Спершу збільште місткість цих номерів.",
+            (await Problem.ReadAsync(larger, HttpStatusCode.Conflict)).Detail);
+        Assert.Equal(1, (await smaller.ReadAsync<RoomCategoryResponse>()).Capacity);
+    }
+
+    [Fact]
     public async Task RenameToAnExistingNameGives409()
     {
         var category = await CreateCategoryAsync();

@@ -102,6 +102,27 @@ public class RoomsApiTests(ApiFixture api) : IClassFixture<ApiFixture>
     }
 
     [Fact]
+    public async Task RoomSmallerThanTheBaseCapacityOfItsCategoryGives400()
+    {
+        // Guests book a category for up to its base capacity, so no room of it may hold fewer.
+        var hotel = await CreateHotelAsync();
+        var room = hotel.Rooms[0];
+
+        var newRoom = await api.Client.PostJsonAsync(Url, new { hotelId = hotel.Hotel.Id, number = "900", floor = 1, roomCategoryId = Seed.Standard, capacity = 1 });
+        var smaller = await api.Client.PutJsonAsync($"{Url}/{room.Id}", new { number = room.Number, floor = 1, roomCategoryId = hotel.Category.Id, capacity = 1 });
+        var toSuite = await api.Client.PutJsonAsync($"{Url}/{room.Id}", new { number = room.Number, floor = 1, roomCategoryId = Seed.Suite, capacity = 2 });
+
+        Assert.Equal(
+            "Місткість номера не може бути меншою за базову місткість категорії «Standard» (2): гості бронюють категорію.",
+            Assert.Single((await Problem.ReadAsync(newRoom, HttpStatusCode.BadRequest)).Errors!["capacity"]));
+        await Problem.ReadAsync(smaller, HttpStatusCode.BadRequest);
+        Assert.StartsWith("Місткість номера не може бути меншою за базову місткість категорії «Suite» (4)",
+            Assert.Single((await Problem.ReadAsync(toSuite, HttpStatusCode.BadRequest)).Errors!["capacity"]));
+        var unchanged = await GetAsync(room.Id);
+        Assert.Equal((hotel.Category.Id, 2), (unchanged.RoomCategoryId, unchanged.Capacity));
+    }
+
+    [Fact]
     public async Task RoomOfAnUnknownHotelOrCategoryGives404()
     {
         var hotel = await CreateHotelAsync();

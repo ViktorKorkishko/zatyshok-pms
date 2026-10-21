@@ -59,14 +59,18 @@ public class RoomCategoriesController(RoomCategoryService categories) : Controll
     }
 
     /// <summary>Змінити категорію номерів.</summary>
-    /// <remarks>Місткість категорії — типова для нових номерів; наявні номери зберігають свою місткість (FR-06).</remarks>
+    /// <remarks>
+    /// Базова місткість — скільки гостей пошук пропонує для категорії і типова місткість нового номера.
+    /// Номер категорії може вміщувати більше, але не менше, тому базову місткість не можна збільшити понад
+    /// місткість будь-якого номера категорії.
+    /// </remarks>
     /// <param name="id" example="11111111-1111-1111-1111-111111111101">Ідентифікатор категорії.</param>
     /// <param name="request">Нові значення полів.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Категорія після зміни.</response>
     /// <response code="400">Помилки в полях.</response>
     /// <response code="404">Категорію не знайдено.</response>
-    /// <response code="409">Категорія з такою назвою вже існує.</response>
+    /// <response code="409">Категорія з такою назвою вже існує, або номер категорії вміщує менше гостей, ніж нова базова місткість.</response>
     [HttpPut("{id:guid}")]
     [AllowedRoles(Roles.Administrator)]
     [ProducesResponseType(StatusCodes.Status200OK)]

@@ -17,7 +17,10 @@ public sealed class RoomCategoryRequest
     /// <example>Дві кімнати, двоспальне ліжко і диван.</example>
     public string? Description { get; init; }
 
-    /// <summary>Базова місткість: скільки гостей зазвичай вміщує номер категорії.</summary>
+    /// <summary>
+    /// Базова місткість: скільки гостей вміщує кожен номер категорії; на стільки гостей категорію пропонує
+    /// пошук доступності.
+    /// </summary>
     /// <example>4</example>
     public int Capacity { get; init; }
 

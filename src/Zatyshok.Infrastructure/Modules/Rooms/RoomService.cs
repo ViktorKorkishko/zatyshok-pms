@@ -7,8 +7,8 @@ using Zatyshok.Infrastructure.Persistence;
 namespace Zatyshok.Infrastructure.Modules.Rooms;
 
 /// <summary>
-/// Editable fields of a room (FR-06). A null capacity takes the base capacity of the category.
-/// The hotel is not here: a room never moves to another hotel.
+/// Editable fields of a room (FR-06). A null capacity takes the base capacity of the category; a given one
+/// is not smaller than it (<see cref="RoomService"/>). The hotel is not here: a room never moves to another hotel.
 /// </summary>
 public record RoomData(string Number, int Floor, Guid RoomCategoryId, int? Capacity, string? Amenities, string? Notes);
 
@@ -210,11 +210,30 @@ public class RoomService(ZatyshokDbContext db, IHotelScope scope, ILogger<RoomSe
 
     private static void Apply(Room room, RoomData data, RoomCategory category)
     {
+        var capacity = data.Capacity ?? category.Capacity;
+        EnsureHoldsTheBaseCapacity(capacity, category);
+
         room.Number = data.Number.Trim();
         room.Floor = data.Floor;
-        room.Capacity = data.Capacity ?? category.Capacity;
+        room.Capacity = capacity;
         room.Amenities = Text.OrNull(data.Amenities);
         room.Notes = Text.OrNull(data.Notes);
+    }
+
+    /// <summary>
+    /// A guest books a category, not a room, and the search offers a category for up to its base capacity
+    /// (FR-05, FR-10). So every room of the category holds at least that many guests; otherwise the room
+    /// given out at check-in (FR-19) could be too small for the booking. A room may hold more (e.g. an extra
+    /// bed), but the search does not count on it. RoomCategoryService keeps the rule when the base grows.
+    /// </summary>
+    private static void EnsureHoldsTheBaseCapacity(int capacity, RoomCategory category)
+    {
+        if (capacity < category.Capacity)
+        {
+            throw new InvalidRequestException(
+                nameof(RoomData.Capacity),
+                $"Місткість номера не може бути меншою за базову місткість категорії «{category.Name}» ({category.Capacity}): гості бронюють категорію.");
+        }
     }
 
     private static NotFoundException NotFound() => new("Номер не знайдено.");
