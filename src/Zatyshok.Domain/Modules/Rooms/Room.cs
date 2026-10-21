@@ -16,6 +16,7 @@ public class Room
 
     public Hotel Hotel { get; set; } = null!;
 
+    /// <summary>Set directly only for a new room; an existing room changes it through <see cref="ChangeCategory"/>.</summary>
     public Guid RoomCategoryId { get; set; }
 
     public RoomCategory Category { get; set; } = null!;
@@ -117,6 +118,27 @@ public class Room
     {
         EnsureStatus("повернути в експлуатацію", RoomStatus.OutOfOrder);
         Status = RoomStatus.Dirty;
+    }
+
+    /// <summary>
+    /// Moves the room to another category (FR-06). Forbidden while a booking holds the room: a
+    /// pre-assigned or occupied room must stay in the category of its booking, which
+    /// <c>Booking.AssignRoom</c> checked. The rate lock of the old category is the caller's job (12.8.2).
+    /// </summary>
+    public void ChangeCategory(Guid roomCategoryId)
+    {
+        if (roomCategoryId == RoomCategoryId)
+        {
+            return;
+        }
+
+        if (Status is RoomStatus.Reserved or RoomStatus.Occupied)
+        {
+            throw new DomainException(
+                $"Номер {StatusName(Status)}: його категорія має збігатися з категорією бронювання, тому змінити її зараз не можна.");
+        }
+
+        RoomCategoryId = roomCategoryId;
     }
 
     /// <summary>Excludes the room from availability (UC-08). Independent of the state, but forbidden for an occupied room (UC-08 A2).</summary>
