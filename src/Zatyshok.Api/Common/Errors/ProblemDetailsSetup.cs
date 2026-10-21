@@ -25,6 +25,9 @@ public static class ProblemDetailsSetup
         [StatusCodes.Status500InternalServerError] = "Внутрішня помилка сервера",
     };
 
+    /// <summary>The Ukrainian title of an error with this status code, or null for a code without one.</summary>
+    public static string? TitleOf(int status) => Titles.GetValueOrDefault(status);
+
     /// <summary>
     /// Registers the ProblemDetails service used by the exception handler, by status code pages
     /// (e.g. 404 for an unknown path) and by MVC (validation, NotFound()).

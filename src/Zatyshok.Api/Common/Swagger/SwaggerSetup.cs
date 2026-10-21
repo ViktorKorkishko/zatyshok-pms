@@ -1,7 +1,10 @@
 using System.Reflection;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Zatyshok.Api.Common.Authorization;
+using Zatyshok.Api.Common.Errors;
+using Zatyshok.Api.Common.Validation;
 
 namespace Zatyshok.Api.Common.Swagger;
 
@@ -35,7 +38,76 @@ public static class SwaggerSetup
 
             options.OperationFilter<AllowedRolesOperationFilter>();
             options.OperationFilter<MediaTypesOperationFilter>();
+
+            // After MediaTypesOperationFilter: that filter replaces the media types of a response and
+            // would drop an example added before it.
+            options.OperationFilter<ProblemExamplesOperationFilter>();
         });
+}
+
+/// <summary>
+/// Gives every error response an example in the format the API returns: the
+/// Ukrainian title of the status code, the detail and the correlation id. Without it Swagger shows
+/// "string" in every field. The detail of the example repeats the description of the response, while
+/// a real response names the exact reason; type and traceId, which ASP.NET Core adds itself, are left out.
+/// </summary>
+public sealed class ProblemExamplesOperationFilter : IOperationFilter
+{
+    /// <inheritdoc />
+    public void Apply(OpenApiOperation operation, OperationFilterContext context)
+    {
+        foreach (var (statusCode, response) in operation.Responses)
+        {
+            if (statusCode.StartsWith('2') || !int.TryParse(statusCode, out var status) || response.Content.Count == 0)
+            {
+                continue;
+            }
+
+            var example = new OpenApiObject
+            {
+                ["title"] = new OpenApiString(ProblemDetailsSetup.TitleOf(status) ?? response.Description),
+                ["status"] = new OpenApiInteger(status),
+            };
+            if (status == StatusCodes.Status400BadRequest)
+            {
+                // A 400 lists the errors by field; the example names one field of this request.
+                example["detail"] = new OpenApiString(ValidationProblems.Detail);
+                example["errors"] = new OpenApiObject
+                {
+                    [FirstField(operation, context)] = new OpenApiArray { new OpenApiString("Некоректне значення.") },
+                };
+            }
+            else
+            {
+                example["detail"] = new OpenApiString(response.Description.ReplaceLineEndings(" "));
+            }
+
+            example["correlationId"] = new OpenApiString("3ab598cb-5b99-4c5c-80cc-1344700e7472");
+            foreach (var mediaType in response.Content.Values)
+            {
+                mediaType.Example = example;
+            }
+        }
+    }
+
+    // The first query parameter (?hotelId=…), otherwise the first field of the request body.
+    private static string FirstField(OpenApiOperation operation, OperationFilterContext context)
+    {
+        if (operation.Parameters.FirstOrDefault(p => p.In == ParameterLocation.Query) is { } parameter)
+        {
+            return parameter.Name;
+        }
+
+        var schema = operation.RequestBody?.Content.Values.FirstOrDefault()?.Schema;
+        if (schema?.Reference is { } reference
+            && context.SchemaRepository.Schemas.TryGetValue(reference.Id, out var body)
+            && body.Properties.Count > 0)
+        {
+            return body.Properties.Keys.First();
+        }
+
+        return "id";
+    }
 }
 
 /// <summary>

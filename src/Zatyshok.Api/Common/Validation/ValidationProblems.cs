@@ -12,6 +12,9 @@ namespace Zatyshok.Api.Common.Validation;
 /// </summary>
 public static class ValidationProblems
 {
+    /// <summary>The detail of every 400 response; the errors themselves are in <c>errors</c>.</summary>
+    public const string Detail = "Перевірте значення полів, перелічених в errors.";
+
     /// <summary>Used as <c>ApiBehaviorOptions.InvalidModelStateResponseFactory</c> and by <see cref="ValidationFilter"/>.</summary>
     public static IActionResult CreateResult(ActionContext context)
     {
@@ -32,7 +35,7 @@ public static class ValidationProblems
             context.HttpContext,
             modelState,
             StatusCodes.Status400BadRequest,
-            detail: "Перевірте значення полів, перелічених в errors.");
+            detail: Detail);
 
         return new BadRequestObjectResult(problem) { ContentTypes = { "application/problem+json" } };
     }

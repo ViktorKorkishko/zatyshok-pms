@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
+using Zatyshok.Api.Common.Errors;
 
 namespace Zatyshok.Tests.Integration.Api;
 
@@ -51,7 +52,7 @@ public class ApiPipelineTests(ApiFixture api) : IClassFixture<ApiFixture>
     }
 
     [Fact]
-    public async Task SwaggerDescribesEveryEndpointWithItsRolesAndMediaTypes()
+    public async Task SwaggerDescribesEveryEndpointWithItsRolesMediaTypesAndErrorExamples()
     {
         var response = await api.Client.GetAsync("/swagger/v1/swagger.json");
         await response.AssertStatusAsync(HttpStatusCode.OK);
@@ -78,6 +79,15 @@ public class ApiPipelineTests(ApiFixture api) : IClassFixture<ApiFixture>
             {
                 var expected = code.StartsWith('2') ? "application/json" : "application/problem+json";
                 Assert.Equal([expected], content.EnumerateObject().Select(c => c.Name));
+
+                // An error has an example of the real ProblemDetails, with the Ukrainian title of its code.
+                if (!code.StartsWith('2'))
+                {
+                    Assert.True(content.GetProperty(expected).TryGetProperty("example", out var example), $"{name} {code}: no example");
+                    Assert.Equal(ProblemDetailsSetup.TitleOf(int.Parse(code)), example.GetProperty("title").GetString());
+                    Assert.Equal(int.Parse(code), example.GetProperty("status").GetInt32());
+                    Assert.False(string.IsNullOrWhiteSpace(example.GetProperty("detail").GetString()), $"{name} {code}: no detail");
+                }
             }
         }
     }
