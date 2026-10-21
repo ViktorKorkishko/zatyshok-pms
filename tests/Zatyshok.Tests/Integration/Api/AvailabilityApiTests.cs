@@ -230,7 +230,11 @@ public class AvailabilityApiTests(ApiFixture api) : IClassFixture<ApiFixture>
     [InlineData("city=Київ&checkIn=2030-01-10&checkOut=2030-02-10&guests=2", "checkOut", "Період проживання — не більше 30 ночей.")]
     [InlineData("city=Київ&checkIn=2030-01-10&checkOut=2030-01-12&guests=0", "guests", "Кількість гостей має бути не меншою за 1.")]
     [InlineData("city=Київ&checkOut=2030-01-12&guests=1", "checkIn", "Вкажіть дату заїзду.")]
-    [InlineData("city=Київ&checkIn=10.01.2030x&checkOut=2030-01-12&guests=1", "checkIn", "Значення «10.01.2030x» не підходить для цього поля.")]
+    [InlineData("city=Київ&checkIn=10.01.2030x&checkOut=2030-01-12&guests=1", "checkIn", "Значення «10.01.2030x» не є датою у форматі РРРР-ММ-ДД (наприклад, 2027-06-01).")]
+    // A date in another format is not read in some other way: 01.06.2027 would have been 6 January.
+    [InlineData("city=Київ&checkIn=01.06.2027&checkOut=2027-06-02&guests=1", "checkIn", "Значення «01.06.2027» не є датою у форматі РРРР-ММ-ДД (наприклад, 2027-06-01).")]
+    [InlineData("city=Київ&checkIn=2027-06-01&checkOut=2027-06-02T23:00&guests=1", "checkOut", "Значення «2027-06-02T23:00» не є датою у форматі РРРР-ММ-ДД (наприклад, 2027-06-01).")]
+    [InlineData("city=Київ&checkIn=June%201%202027&checkOut=2027-06-02&guests=1", "checkIn", "Значення «June 1 2027» не є датою у форматі РРРР-ММ-ДД (наприклад, 2027-06-01).")]
     public async Task InvalidQueryGivesValidationProblem(string query, string field, string message)
     {
         var problem = await Problem.ReadAsync(await api.Client.GetAsync($"{Url}?{query}"), HttpStatusCode.BadRequest);

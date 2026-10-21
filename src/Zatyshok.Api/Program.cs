@@ -29,6 +29,9 @@ builder.Services
         // would add its own English "The Name field is required." for every non-nullable string.
         options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
         UkrainianBindingMessages.Apply(options.ModelBindingMessageProvider);
+
+        // Dates in the query string only as yyyy-MM-dd; first, so that it replaces the binder of MVC.
+        options.ModelBinderProviders.Insert(0, new IsoDateModelBinderProvider());
     })
     .AddJsonOptions(options =>
     {
