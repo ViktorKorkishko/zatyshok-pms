@@ -34,6 +34,14 @@ public class ApiConventionTests
         .Where(t => t is { IsClass: true, IsAbstract: false } && typeof(ControllerBase).IsAssignableFrom(t))
         .ToArray();
 
+    /// <summary>
+    /// Namespaces of modules that the shared code may not use: everything in Api/Modules, and a module of
+    /// Domain or Infrastructure except its Contracts and Events ("…Modules.Rooms" and "…Modules.Rooms.X" match,
+    /// "…Modules.Rooms.Contracts" does not).
+    /// </summary>
+    private const string ModuleInternals =
+        @"^Zatyshok\.(Api\.Modules(\..+)?|(Domain|Infrastructure)\.Modules\.[A-Za-z]+(\.(?!(Contracts|Events)\b).+)?)$";
+
     private static readonly HashSet<string> KnownRoles = typeof(Roles)
         .GetFields(BindingFlags.Public | BindingFlags.Static)
         .Where(f => f.IsLiteral)
@@ -127,11 +135,19 @@ public class ApiConventionTests
     [Fact]
     public void SharedApiCodeDoesNotDependOnModules()
     {
+        // Api/Common may use a module of Domain or Infrastructure only through its Contracts and Events (rule 2),
+        // like the modules themselves. Constants (Roles = RoleCodes of Identity.Contracts) are copied into
+        // the IL by the compiler, so a "using" of a constant is not seen here; code review covers it.
         IArchRule rule = Types().That().ResideInNamespaceMatching(@"^Zatyshok\.Api\.Common(\..+)?$")
-            .Should().NotDependOnAnyTypesThat().ResideInNamespaceMatching(@"^Zatyshok\.Api\.Modules(\..+)?$")
+            .Should().NotDependOnAnyTypesThat().ResideInNamespaceMatching(ModuleInternals)
             .Because("Api/Common is the infrastructure of every module, not a module (9.4.1)");
 
         rule.Check(Code);
+
+        // Control: the pattern does match where module internals are used (controllers → services of their module).
+        IArchRule control = Types().That().ResideInNamespaceMatching(@"^Zatyshok\.Api\.Modules(\..+)?$")
+            .Should().NotDependOnAnyTypesThat().ResideInNamespaceMatching(ModuleInternals);
+        Assert.False(control.HasNoViolations(Code));
     }
 
     private static IEnumerable<MethodInfo> ActionsOf(Type controller)

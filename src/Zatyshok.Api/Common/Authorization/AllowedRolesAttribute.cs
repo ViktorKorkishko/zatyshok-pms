@@ -1,4 +1,4 @@
-using Zatyshok.Domain.Modules.Identity;
+using Zatyshok.Domain.Modules.Identity.Contracts;
 
 namespace Zatyshok.Api.Common.Authorization;
 
@@ -17,8 +17,8 @@ public sealed class AllowedRolesAttribute(params string[] roles) : Attribute
 
 /// <summary>
 /// Role codes for <see cref="AllowedRolesAttribute"/>. The values are the codes of identity.Roles
-/// (<see cref="RoleCodes"/>); controllers use this class, because a controller of one module may
-/// not refer to another module, Identity included (9.4.1, rule 2).
+/// (<see cref="RoleCodes"/>, a contract of Identity); controllers use this class, because a controller
+/// of one module may not refer to another module, Identity included (9.4.1, rules 2 and 4).
 /// </summary>
 public static class Roles
 {

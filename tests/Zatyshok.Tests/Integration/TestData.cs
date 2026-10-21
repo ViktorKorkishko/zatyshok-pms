@@ -4,6 +4,7 @@ using Zatyshok.Domain.Common;
 using Zatyshok.Domain.Modules.Bookings;
 using Zatyshok.Domain.Modules.Guests;
 using Zatyshok.Domain.Modules.Identity;
+using Zatyshok.Domain.Modules.Identity.Contracts;
 using Zatyshok.Domain.Modules.Rooms;
 using Zatyshok.Infrastructure.Persistence;
 
