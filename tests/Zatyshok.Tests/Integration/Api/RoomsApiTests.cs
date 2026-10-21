@@ -308,6 +308,33 @@ public class RoomsApiTests(ApiFixture api) : IClassFixture<ApiFixture>
         Assert.Equal(RoomStatus.OutOfOrder, (await (await request).ReadAsync<RoomResponse>()).Status);
     }
 
+    [Theory]
+    [InlineData("deactivate")]
+    [InlineData("delete")]
+    [InlineData("change category")]
+    public async Task OtherChangesThatReduceAvailabilityWaitForTheRateLock(string change)
+    {
+        // The same rule of 12.8.2 for the other operations that take a room away from its pair; a new
+        // category takes it away from the old pair, so the old rate is the one locked.
+        var hotel = await CreateHotelAsync();
+        var room = hotel.Rooms[0];
+        await using var booking = api.CreateDbContext();
+        await using var transaction = await booking.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        await booking.Database.ExecuteSqlAsync($"""SELECT 1 FROM rooms."Rates" WHERE "Id" = {hotel.Rate.Id} FOR UPDATE""");
+
+        var request = change switch
+        {
+            "deactivate" => api.Client.PostAsync($"{Url}/{room.Id}/deactivate", null),
+            "delete" => api.Client.DeleteAsync($"{Url}/{room.Id}"),
+            _ => api.Client.PutJsonAsync($"{Url}/{room.Id}", new { number = room.Number, floor = 1, roomCategoryId = Seed.Superior, capacity = 2 }),
+        };
+        await RowLocks.WaitUntilSomeSessionWaitsForLockAsync(api);
+
+        Assert.False(request.IsCompleted);
+        await transaction.CommitAsync();
+        await (await request).AssertStatusAsync(change == "delete" ? HttpStatusCode.NoContent : HttpStatusCode.OK);
+    }
+
     [Fact]
     public async Task UserOfOneHotelSeesOnlyItsRooms()
     {
