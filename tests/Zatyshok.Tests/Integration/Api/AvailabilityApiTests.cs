@@ -245,9 +245,10 @@ public class AvailabilityApiTests(ApiFixture api) : IClassFixture<ApiFixture>
         await (await api.Client.PostAsync($"/api/v1/rooms/{hotel.Rooms[0].Id}/out-of-order", null)).AssertStatusAsync(HttpStatusCode.OK);
         await (await api.Client.PostAsync($"/api/v1/rooms/{hotel.Rooms[1].Id}/deactivate", null)).AssertStatusAsync(HttpStatusCode.OK);
 
-        // 1 room left for 2 bookings on the first night: a deficit of one room (12.8.3, UC-16 A2).
+        // 1 room left for 2 bookings on the first night: a deficit of one room (12.8.3, UC-16 A2), which is
+        // the manager's warning; the public search shows the night as 0, not −1.
         var category = await SearchOneCategoryAsync(hotel, start, start.AddDays(2));
-        Assert.Equal([-1, 1], category.Nights.Select(n => n.FreeRooms));
+        Assert.Equal([0, 1], category.Nights.Select(n => n.FreeRooms));
         Assert.Equal(0, category.AvailableRooms);
 
         // Back in service the room waits for cleaning (Dirty), but it is sold again.

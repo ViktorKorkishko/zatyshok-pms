@@ -190,7 +190,11 @@ internal sealed class AvailabilityService(ZatyshokDbContext db, IRoomCatalog cat
         var freeRooms = AvailabilityCalculator.FreeRoomsPerNight(rooms?.Count ?? 0, bookedRoomsPerNight, search.CheckIn, search.CheckOut);
 
         // Both lists have the nights check-in … check-out − 1 in order (StayNights), so they pair up one to one.
-        var nights = prices.Nights.Zip(freeRooms, (price, free) => new NightOffer(price.Night, price.Price, free.FreeRooms)).ToList();
+        // An overbooked night (negative, after a room went out of order) is shown as 0: the search is public,
+        // and the deficit is a warning for the manager (UC-16 A2) from reporting.v_category_availability_daily.
+        var nights = prices.Nights
+            .Zip(freeRooms, (price, free) => new NightOffer(price.Night, price.Price, Math.Max(0, free.FreeRooms)))
+            .ToList();
 
         return new CategoryOffer(
             category.Id,

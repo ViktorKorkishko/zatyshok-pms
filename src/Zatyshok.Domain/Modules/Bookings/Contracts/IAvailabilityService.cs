@@ -12,7 +12,11 @@ namespace Zatyshok.Domain.Modules.Bookings.Contracts;
 public sealed record AvailabilitySearch(
     Guid? HotelId, string? City, Guid? RoomCategoryId, DateOnly CheckIn, DateOnly CheckOut, int Guests);
 
-/// <summary>One night of a stay in a category: its price and how many rooms of the category are free that night.</summary>
+/// <summary>
+/// One night of a stay in a category: its price and how many rooms of the category are free that night, at
+/// least 0. An overbooked night is not shown as a negative number to the portal; the deficit is the manager's
+/// warning (UC-16 A2, 12.8.3).
+/// </summary>
 public sealed record NightOffer(DateOnly Night, decimal Price, int FreeRooms);
 
 /// <summary>A category of a hotel that holds the guests: rooms available for the whole stay and its cost.</summary>
