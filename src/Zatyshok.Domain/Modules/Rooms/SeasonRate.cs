@@ -30,4 +30,7 @@ public class SeasonRate
     /// <paramref name="endDate"/>]; both bounds are inclusive, so periods that touch on one night overlap.
     /// </summary>
     public bool Overlaps(DateOnly startDate, DateOnly endDate) => StartDate <= endDate && startDate <= EndDate;
+
+    /// <summary>Whether the night of <paramref name="night"/> is in the period; both bounds are nights of the period.</summary>
+    public bool Includes(DateOnly night) => StartDate <= night && night <= EndDate;
 }

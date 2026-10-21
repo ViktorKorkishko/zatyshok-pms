@@ -31,4 +31,14 @@ public class SeasonRateTests
     {
         Assert.False(June.Overlaps(DateOnly.Parse(start), DateOnly.Parse(end)));
     }
+
+    [Theory]
+    [InlineData("2027-05-31", false)]
+    [InlineData("2027-06-01", true)] // first night
+    [InlineData("2027-06-10", true)] // last night
+    [InlineData("2027-06-11", false)]
+    public void BothBoundsAreNightsOfThePeriod(string night, bool included)
+    {
+        Assert.Equal(included, June.Includes(DateOnly.Parse(night)));
+    }
 }
