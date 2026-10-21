@@ -95,6 +95,7 @@ public class ModuleBoundaryTests
     {
         var violations = new List<string>();
         var foreignKeyReferences = 0;
+        var contractReferences = 0;
 
         foreach (var (origin, target) in CrossModuleDependencies())
         {
@@ -103,6 +104,7 @@ public class ModuleBoundaryTests
 
             if (from.Layer != "Api" && to.Part is ("Contracts" or "Events"))
             {
+                contractReferences++;
                 continue;
             }
 
@@ -117,8 +119,10 @@ public class ModuleBoundaryTests
 
         Assert.True(violations.Count == 0, "Forbidden dependencies between modules:\n" + string.Join("\n", violations));
 
-        // Control: cross-module references are found at all (e.g. BookingConfiguration → Room).
+        // Control: cross-module references are found at all (e.g. BookingConfiguration → Room), and so are
+        // uses of a contract (AvailabilityService of Bookings → IRoomCatalog of Rooms, table 9.6).
         Assert.True(foreignKeyReferences > 0);
+        Assert.True(contractReferences > 0);
     }
 
     [Fact]
