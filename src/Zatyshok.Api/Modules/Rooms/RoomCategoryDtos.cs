@@ -63,8 +63,8 @@ public sealed class RoomCategoryResponse
 /// <summary>Фільтри списку категорій.</summary>
 public sealed class RoomCategoryListQuery : PageQuery
 {
-    /// <summary>true — лише діючі категорії, false — лише деактивовані; не вказано — усі.</summary>
-    public bool? IsActive { get; init; }
+    /// <summary>true (типово) — лише діючі категорії, false — лише деактивовані, наприклад щоб знову активувати категорію.</summary>
+    public bool IsActive { get; init; } = true;
 }
 
 /// <summary>Rules of <see cref="RoomCategoryRequest"/>; the lengths are those of rooms.RoomCategories.</summary>

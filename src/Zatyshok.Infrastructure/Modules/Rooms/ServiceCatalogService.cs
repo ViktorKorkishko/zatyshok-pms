@@ -15,16 +15,12 @@ public record ServiceData(string Name, string? Description, decimal Price);
 /// </summary>
 public class ServiceCatalogService(ZatyshokDbContext db)
 {
-    public Task<PagedList<Service>> ListAsync(bool? isActive, PageRequest page, CancellationToken cancellationToken)
-    {
-        var query = db.Services.AsNoTracking();
-        if (isActive is { } active)
-        {
-            query = query.Where(s => s.IsActive == active);
-        }
-
-        return query.OrderBy(s => s.Name).ToPagedListAsync(page, cancellationToken);
-    }
+    /// <summary>Active or deactivated services (the API asks for active ones by default).</summary>
+    public Task<PagedList<Service>> ListAsync(bool isActive, PageRequest page, CancellationToken cancellationToken)
+        => db.Services.AsNoTracking()
+            .Where(s => s.IsActive == isActive)
+            .OrderBy(s => s.Name)
+            .ToPagedListAsync(page, cancellationToken);
 
     public async Task<Service> GetAsync(Guid id, CancellationToken cancellationToken)
         => await db.Services.AsNoTracking().SingleOrDefaultAsync(s => s.Id == id, cancellationToken)

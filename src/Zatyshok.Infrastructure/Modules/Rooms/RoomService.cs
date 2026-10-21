@@ -13,8 +13,8 @@ namespace Zatyshok.Infrastructure.Modules.Rooms;
 /// </summary>
 public record RoomData(string Number, int Floor, Guid RoomCategoryId, int? Capacity, string? Amenities, string? Notes);
 
-/// <summary>Filters of the room list; null means "any".</summary>
-public record RoomFilter(Guid? HotelId, Guid? RoomCategoryId, RoomStatus? Status, bool? IsActive, int? Floor);
+/// <summary>Filters of the room list; null means "any". The list has either active or deactivated rooms.</summary>
+public record RoomFilter(Guid? HotelId, Guid? RoomCategoryId, RoomStatus? Status, bool IsActive, int? Floor);
 
 /// <summary>
 /// Rooms of the hotels (FR-06, UC-08) and their manual state changes (FR-07). Every query is limited
@@ -42,10 +42,8 @@ public class RoomService(ZatyshokDbContext db, IHotelScope scope, ILogger<RoomSe
             query = query.Where(r => r.Status == status);
         }
 
-        if (filter.IsActive is { } isActive)
-        {
-            query = query.Where(r => r.IsActive == isActive);
-        }
+        // A deactivated room leaves the lists (UC-08); it is listed only when asked for, to activate it again.
+        query = query.Where(r => r.IsActive == filter.IsActive);
 
         if (filter.Floor is { } floor)
         {

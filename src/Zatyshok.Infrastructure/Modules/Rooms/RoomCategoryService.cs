@@ -14,16 +14,12 @@ public record RoomCategoryData(string Name, string? Description, int Capacity);
 /// </summary>
 public class RoomCategoryService(ZatyshokDbContext db)
 {
-    public Task<PagedList<RoomCategory>> ListAsync(bool? isActive, PageRequest page, CancellationToken cancellationToken)
-    {
-        var query = db.RoomCategories.AsNoTracking();
-        if (isActive is { } active)
-        {
-            query = query.Where(c => c.IsActive == active);
-        }
-
-        return query.OrderBy(c => c.Name).ToPagedListAsync(page, cancellationToken);
-    }
+    /// <summary>Active or deactivated categories (the API asks for active ones by default).</summary>
+    public Task<PagedList<RoomCategory>> ListAsync(bool isActive, PageRequest page, CancellationToken cancellationToken)
+        => db.RoomCategories.AsNoTracking()
+            .Where(c => c.IsActive == isActive)
+            .OrderBy(c => c.Name)
+            .ToPagedListAsync(page, cancellationToken);
 
     public async Task<RoomCategory> GetAsync(Guid id, CancellationToken cancellationToken)
         => await db.RoomCategories.AsNoTracking().SingleOrDefaultAsync(c => c.Id == id, cancellationToken)

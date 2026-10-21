@@ -19,8 +19,8 @@ public record HotelData(
     TimeOnly CheckInTime,
     TimeOnly CheckOutTime);
 
-/// <summary>Filters of the hotel list; null means "any".</summary>
-public record HotelFilter(string? City, bool? IsActive);
+/// <summary>Filters of the hotel list: a null city means "any"; the list has either active or deactivated hotels.</summary>
+public record HotelFilter(string? City, bool IsActive);
 
 /// <summary>
 /// Hotels of the network (FR-05, UC-11). Not limited by the hotel scope: the hotel list is the
@@ -37,10 +37,8 @@ public class HotelService(ZatyshokDbContext db)
             query = query.Where(h => h.City == trimmed);
         }
 
-        if (filter.IsActive is { } isActive)
-        {
-            query = query.Where(h => h.IsActive == isActive);
-        }
+        // Never both kinds together: by default the API asks for active hotels only (UC-08, FR-10).
+        query = query.Where(h => h.IsActive == filter.IsActive);
 
         // Id as the last key keeps the order stable for hotels with the same name (see ToPagedListAsync).
         return query.OrderBy(h => h.Name).ThenBy(h => h.Id).ToPagedListAsync(page, cancellationToken);

@@ -75,8 +75,10 @@ public class ServicesApiTests(ApiFixture api) : IClassFixture<ApiFixture>
         var deactivated = await (await api.Client.PostAsync($"{Url}/{service.Id}/deactivate", null)).ReadAsync<ServiceResponse>();
 
         Assert.False(deactivated.IsActive);
-        var active = await (await api.Client.GetAsync($"{Url}?isActive=true&pageSize=100")).ReadAsync<PagedResponse<ServiceResponse>>();
-        Assert.DoesNotContain(active.Items, s => s.Id == service.Id);
+        var byDefault = await (await api.Client.GetAsync($"{Url}?pageSize=100")).ReadAsync<PagedResponse<ServiceResponse>>();
+        var inactive = await (await api.Client.GetAsync($"{Url}?isActive=false&pageSize=100")).ReadAsync<PagedResponse<ServiceResponse>>();
+        Assert.DoesNotContain(byDefault.Items, s => s.Id == service.Id);
+        Assert.Contains(inactive.Items, s => s.Id == service.Id);
     }
 
     [Fact]

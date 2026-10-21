@@ -163,8 +163,11 @@ public sealed class HotelListQuery : PageQuery
     /// <example>Київ</example>
     public string? City { get; init; }
 
-    /// <summary>true — лише діючі готелі, false — лише деактивовані; не вказано — усі.</summary>
-    public bool? IsActive { get; init; }
+    /// <summary>
+    /// true (типово) — лише діючі готелі, false — лише деактивовані, наприклад щоб знову активувати готель.
+    /// Деактивований готель не приймає бронювань, тож типово його немає в списку.
+    /// </summary>
+    public bool IsActive { get; init; } = true;
 }
 
 /// <summary>

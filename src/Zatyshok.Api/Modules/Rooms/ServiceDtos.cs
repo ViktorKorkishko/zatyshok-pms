@@ -61,8 +61,8 @@ public sealed class ServiceResponse
 /// <summary>Фільтри списку послуг.</summary>
 public sealed class ServiceListQuery : PageQuery
 {
-    /// <summary>true — лише діючі послуги, false — лише деактивовані; не вказано — усі.</summary>
-    public bool? IsActive { get; init; }
+    /// <summary>true (типово) — лише діючі послуги, false — лише деактивовані, наприклад щоб знову активувати послугу.</summary>
+    public bool IsActive { get; init; } = true;
 }
 
 /// <summary>Rules of <see cref="ServiceRequest"/>; the lengths and the price are those of rooms.Services.</summary>

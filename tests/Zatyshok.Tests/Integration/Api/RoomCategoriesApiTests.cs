@@ -110,7 +110,9 @@ public class RoomCategoriesApiTests(ApiFixture api) : IClassFixture<ApiFixture>
 
         await (await api.Client.PostAsync($"{Url}/{category.Id}/deactivate", null)).AssertStatusAsync(HttpStatusCode.OK);
 
+        var byDefault = await (await api.Client.GetAsync($"{Url}?pageSize=100")).ReadAsync<PagedResponse<RoomCategoryResponse>>();
         var inactive = await (await api.Client.GetAsync($"{Url}?isActive=false&pageSize=100")).ReadAsync<PagedResponse<RoomCategoryResponse>>();
+        Assert.DoesNotContain(byDefault.Items, c => c.Id == category.Id);
         Assert.Contains(inactive.Items, c => c.Id == category.Id);
         var activated = await (await api.Client.PostAsync($"{Url}/{category.Id}/activate", null)).ReadAsync<RoomCategoryResponse>();
         Assert.True(activated.IsActive);

@@ -128,8 +128,11 @@ public sealed class RoomListQuery : PageQuery
     /// <summary>Лише номери в цьому стані: Free, Reserved, Occupied, Dirty або OutOfOrder.</summary>
     public RoomStatus? Status { get; init; }
 
-    /// <summary>true — лише діючі номери, false — лише деактивовані; не вказано — усі.</summary>
-    public bool? IsActive { get; init; }
+    /// <summary>
+    /// true (типово) — лише діючі номери, false — лише деактивовані, наприклад щоб знову активувати номер.
+    /// Деактивований номер виключається зі списків (UC-08), тож типово його немає.
+    /// </summary>
+    public bool IsActive { get; init; } = true;
 
     /// <summary>Лише номери цього поверху.</summary>
     public int? Floor { get; init; }

@@ -31,10 +31,12 @@ public class HotelsApiTests(ApiFixture api) : IClassFixture<ApiFixture>
         await (await api.Client.PostAsync($"{Url}/{hotel.Id}/deactivate", null)).AssertStatusAsync(HttpStatusCode.OK);
 
         var lviv = await (await api.Client.GetAsync($"{Url}?city=Львів")).ReadAsync<PagedResponse<HotelResponse>>();
+        var uzhhorod = await (await api.Client.GetAsync($"{Url}?city=Ужгород")).ReadAsync<PagedResponse<HotelResponse>>();
         var activeInUzhhorod = await (await api.Client.GetAsync($"{Url}?city=Ужгород&isActive=true")).ReadAsync<PagedResponse<HotelResponse>>();
         var inactiveInUzhhorod = await (await api.Client.GetAsync($"{Url}?city=Ужгород&isActive=false")).ReadAsync<PagedResponse<HotelResponse>>();
 
         Assert.Equal(Seed.Lviv, Assert.Single(lviv.Items).Id);
+        Assert.Empty(uzhhorod.Items); // only active hotels unless asked otherwise (the portal builds its search from the list)
         Assert.Empty(activeInUzhhorod.Items);
         Assert.Equal(hotel.Id, Assert.Single(inactiveInUzhhorod.Items).Id);
     }

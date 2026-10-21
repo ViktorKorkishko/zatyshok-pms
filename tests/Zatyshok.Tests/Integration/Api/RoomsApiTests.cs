@@ -256,9 +256,15 @@ public class RoomsApiTests(ApiFixture api) : IClassFixture<ApiFixture>
         var room = hotel.Rooms[0];
 
         var deactivated = await (await api.Client.PostAsync($"{Url}/{room.Id}/deactivate", null)).ReadAsync<RoomResponse>();
+
+        // UC-08: a deactivated room leaves the lists; it is found only when asked for, to activate it again.
+        var byDefault = await (await api.Client.GetAsync($"{Url}?hotelId={hotel.Hotel.Id}")).ReadAsync<PagedResponse<RoomResponse>>();
+        var inactive = await (await api.Client.GetAsync($"{Url}?hotelId={hotel.Hotel.Id}&isActive=false")).ReadAsync<PagedResponse<RoomResponse>>();
         var activated = await (await api.Client.PostAsync($"{Url}/{room.Id}/activate", null)).ReadAsync<RoomResponse>();
 
         Assert.False(deactivated.IsActive);
+        Assert.Empty(byDefault.Items);
+        Assert.Equal(room.Id, Assert.Single(inactive.Items).Id);
         Assert.True(activated.IsActive);
     }
 
