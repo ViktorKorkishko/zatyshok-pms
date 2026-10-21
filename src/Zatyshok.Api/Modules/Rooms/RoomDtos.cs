@@ -30,7 +30,7 @@ public class RoomRequest
     public string? Amenities { get; init; }
 
     /// <summary>Примітки, до 2000 символів; сюди записують і несправність у зайнятому номері (UC-16 А1).</summary>
-    /// <example>Скрипить двері шафи.</example>
+    /// <example>Скриплять двері шафи.</example>
     public string? Notes { get; init; }
 
     internal RoomData ToData() => new(Number, Floor, RoomCategoryId, Capacity, Amenities, Notes);
@@ -80,6 +80,7 @@ public sealed class RoomResponse
     public string? Amenities { get; init; }
 
     /// <summary>Примітки.</summary>
+    /// <example>Скриплять двері шафи.</example>
     public string? Notes { get; init; }
 
     /// <summary>
