@@ -87,6 +87,11 @@ public class RoomService(ZatyshokDbContext db, IHotelScope scope, ILogger<RoomSe
     /// <summary>
     /// Replaces the fields of the room. A new category takes a room away from the old one, so the
     /// rate of the old pair is locked first (12.8.2); the room must not be held by a booking.
+    /// <para>
+    /// Not checked here: UC-08 keeps the number of a room that had a stay. Rooms cannot read bookings
+    /// (9.4.1, rule 1), and Bookings already uses Rooms, so asking Bookings would make a cycle (rule 3).
+    /// The check belongs to the front desk orchestrator of T6 (rule 4).
+    /// </para>
     /// </summary>
     public async Task<Room> UpdateAsync(Guid id, RoomData data, CancellationToken cancellationToken)
     {
@@ -109,7 +114,10 @@ public class RoomService(ZatyshokDbContext db, IHotelScope scope, ILogger<RoomSe
         return await GetAsync(room.Id, cancellationToken);
     }
 
-    /// <summary>Free or Dirty → OutOfOrder (FR-07, FR-30): the room leaves availability.</summary>
+    /// <summary>
+    /// Free or Dirty → OutOfOrder (FR-07, FR-30): the room leaves availability. Until T6 without a fault
+    /// record; T6 replaces this with the registration of a fault.
+    /// </summary>
     public Task<Room> MarkOutOfOrderAsync(Guid id, CancellationToken cancellationToken)
         => ChangeAsync(id, "out of order", room => room.MarkOutOfOrder(), reducesAvailability: true, cancellationToken);
 
