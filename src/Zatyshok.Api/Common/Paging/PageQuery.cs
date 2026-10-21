@@ -1,4 +1,5 @@
 using FluentValidation;
+using Zatyshok.Api.Common.Validation;
 using Zatyshok.Infrastructure.Persistence;
 
 namespace Zatyshok.Api.Common.Paging;
@@ -28,7 +29,7 @@ public class PageQuery
 }
 
 /// <summary>Rules of <see cref="PageQuery"/>; validators of list queries include them with <c>Include(new PageQueryValidator())</c>.</summary>
-public class PageQueryValidator : AbstractValidator<PageQuery>
+public class PageQueryValidator : RequestValidator<PageQuery>
 {
     /// <summary>Creates the rules.</summary>
     public PageQueryValidator()

@@ -1,0 +1,106 @@
+using Microsoft.EntityFrameworkCore;
+using Zatyshok.Domain.Common;
+using Zatyshok.Domain.Modules.Rooms;
+using Zatyshok.Infrastructure.Persistence;
+
+namespace Zatyshok.Infrastructure.Modules.Rooms;
+
+/// <summary>Editable fields of a room category (FR-05).</summary>
+public record RoomCategoryData(string Name, string? Description, int Capacity);
+
+/// <summary>
+/// Room categories: a dictionary of the whole network (FR-05, UC-11), so not limited by the hotel
+/// scope. Prices of a category are set per hotel by rates.
+/// </summary>
+public class RoomCategoryService(ZatyshokDbContext db)
+{
+    public Task<PagedList<RoomCategory>> ListAsync(bool? isActive, PageRequest page, CancellationToken cancellationToken)
+    {
+        var query = db.RoomCategories.AsNoTracking();
+        if (isActive is { } active)
+        {
+            query = query.Where(c => c.IsActive == active);
+        }
+
+        return query.OrderBy(c => c.Name).ToPagedListAsync(page, cancellationToken);
+    }
+
+    public async Task<RoomCategory> GetAsync(Guid id, CancellationToken cancellationToken)
+        => await db.RoomCategories.AsNoTracking().SingleOrDefaultAsync(c => c.Id == id, cancellationToken)
+           ?? throw NotFound();
+
+    public async Task<RoomCategory> CreateAsync(RoomCategoryData data, CancellationToken cancellationToken)
+    {
+        var category = new RoomCategory { Name = data.Name };
+        Apply(category, data);
+
+        db.RoomCategories.Add(category);
+        await SaveAsync(category, cancellationToken);
+        return category;
+    }
+
+    /// <summary>
+    /// Replaces the fields. The capacity is the default for new rooms; rooms keep their own capacity,
+    /// which may differ from the category's (FR-06).
+    /// </summary>
+    public async Task<RoomCategory> UpdateAsync(Guid id, RoomCategoryData data, CancellationToken cancellationToken)
+    {
+        var category = await FindAsync(id, cancellationToken);
+        Apply(category, data);
+        await SaveAsync(category, cancellationToken);
+        return category;
+    }
+
+    /// <summary>A category in use is deactivated instead of deleted (UC-11): new rooms and rates cannot use it.</summary>
+    public async Task<RoomCategory> SetActiveAsync(Guid id, bool isActive, CancellationToken cancellationToken)
+    {
+        var category = await FindAsync(id, cancellationToken);
+        category.IsActive = isActive;
+        await db.SaveChangesAsync(cancellationToken);
+        return category;
+    }
+
+    /// <summary>
+    /// Deletes a category nothing refers to (UC-11). Rooms, rates and bookings refer to it with
+    /// ON DELETE RESTRICT, so PostgreSQL rejects the deletion of a category in use (table 12.12).
+    /// </summary>
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var category = await FindAsync(id, cancellationToken);
+        db.RoomCategories.Remove(category);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (ex.IsForeignKeyViolation())
+        {
+            throw new DomainException(
+                "Категорію мають номери, тарифи або бронювання, тому її не можна видалити. Деактивуйте її.");
+        }
+    }
+
+    private async Task SaveAsync(RoomCategory category, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (ex.IsUniqueViolation("IX_RoomCategories_Name"))
+        {
+            // Categories are shared by the network, so the name must be unique (RoomCategoryConfiguration).
+            throw new DomainException($"Категорія «{category.Name}» уже існує.");
+        }
+    }
+
+    private async Task<RoomCategory> FindAsync(Guid id, CancellationToken cancellationToken)
+        => await db.RoomCategories.SingleOrDefaultAsync(c => c.Id == id, cancellationToken) ?? throw NotFound();
+
+    private static void Apply(RoomCategory category, RoomCategoryData data)
+    {
+        category.Name = data.Name.Trim();
+        category.Description = Text.OrNull(data.Description);
+        category.Capacity = data.Capacity;
+    }
+
+    private static NotFoundException NotFound() => new("Категорію номерів не знайдено.");
+}

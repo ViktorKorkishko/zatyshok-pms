@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using Zatyshok.Infrastructure.Modules.Rooms;
 using Zatyshok.Infrastructure.Persistence;
 
 namespace Zatyshok.Infrastructure;
@@ -14,6 +15,9 @@ public static class DependencyInjection
     {
         var connectionString = BuildConnectionString(configuration);
         services.AddDbContext<ZatyshokDbContext>(options => options.UseZatyshokNpgsql(connectionString));
+
+        // Application services of the modules (9.4.1); each module registers its own.
+        services.AddRoomsModule();
         return services;
     }
 

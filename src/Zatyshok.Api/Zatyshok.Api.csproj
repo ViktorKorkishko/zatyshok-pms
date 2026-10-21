@@ -22,6 +22,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Unit tests call the internal mapping of the DTOs (ToData) without an HTTP request. -->
+    <InternalsVisibleTo Include="Zatyshok.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Zatyshok.Infrastructure\Zatyshok.Infrastructure.csproj" />
     <ProjectReference Include="..\Zatyshok.Domain\Zatyshok.Domain.csproj" />
   </ItemGroup>

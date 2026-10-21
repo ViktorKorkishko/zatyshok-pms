@@ -34,7 +34,45 @@ public static class SwaggerSetup
             options.SupportNonNullableReferenceTypes();
 
             options.OperationFilter<AllowedRolesOperationFilter>();
+            options.OperationFilter<MediaTypesOperationFilter>();
         });
+}
+
+/// <summary>
+/// Leaves in the document the media types the API actually uses: application/json for request bodies
+/// and data, application/problem+json for errors. Without it Swagger lists every type the formatters
+/// know (text/plain, text/json, application/*+json). The controllers do not use [Produces] for this:
+/// [Produces("application/json")] would also rewrite the type of a 400 ProblemDetails returned by a
+/// filter to application/json.
+/// </summary>
+public sealed class MediaTypesOperationFilter : IOperationFilter
+{
+    /// <inheritdoc />
+    public void Apply(OpenApiOperation operation, OperationFilterContext context)
+    {
+        if (operation.RequestBody is { } body)
+        {
+            KeepOne(body.Content, "application/json");
+        }
+
+        foreach (var (statusCode, response) in operation.Responses)
+        {
+            KeepOne(response.Content, statusCode.StartsWith('2') ? "application/json" : "application/problem+json");
+        }
+    }
+
+    private static void KeepOne(IDictionary<string, OpenApiMediaType> content, string mediaType)
+    {
+        if (content.Count == 0)
+        {
+            return;
+        }
+
+        // All the types share one schema, with the examples of the XML comments in it.
+        var schema = content.Values.First().Schema;
+        content.Clear();
+        content[mediaType] = new OpenApiMediaType { Schema = schema };
+    }
 }
 
 /// <summary>Adds the planned roles of <see cref="AllowedRolesAttribute"/> to the description of an endpoint.</summary>

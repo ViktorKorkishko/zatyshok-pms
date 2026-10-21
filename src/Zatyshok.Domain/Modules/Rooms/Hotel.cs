@@ -28,17 +28,22 @@ public class Hotel
 
     // Hotel rules are settings, not code (risk R-08). Defaults: 1 day and 18:00 come from
     // FR-15; 14:00 and 12:00 are an assumption to agree with the hotel directors (12.3.2).
+    // The API uses the same defaults when a new hotel comes without these rules.
+    public const int DefaultCancellationDeadlineDaysBefore = 1;
+    public static readonly TimeOnly DefaultCancellationDeadlineTime = new(18, 0);
+    public static readonly TimeOnly DefaultCheckInTime = new(14, 0);
+    public static readonly TimeOnly DefaultCheckOutTime = new(12, 0);
 
     /// <summary>How many days before check-in the free cancellation ends (FR-15).</summary>
-    public int CancellationDeadlineDaysBefore { get; set; } = 1;
+    public int CancellationDeadlineDaysBefore { get; set; } = DefaultCancellationDeadlineDaysBefore;
 
     /// <summary>Hotel-local time of day when the free cancellation ends (FR-15).</summary>
-    public TimeOnly CancellationDeadlineTime { get; set; } = new(18, 0);
+    public TimeOnly CancellationDeadlineTime { get; set; } = DefaultCancellationDeadlineTime;
 
     /// <summary>Check-in time, used in the arrival reminder (FR-40).</summary>
-    public TimeOnly CheckInTime { get; set; } = new(14, 0);
+    public TimeOnly CheckInTime { get; set; } = DefaultCheckInTime;
 
-    public TimeOnly CheckOutTime { get; set; } = new(12, 0);
+    public TimeOnly CheckOutTime { get; set; } = DefaultCheckOutTime;
 
     public ICollection<Room> Rooms { get; } = new List<Room>();
 
@@ -67,13 +72,32 @@ public class Hotel
         return TimeZoneInfo.ConvertTimeToUtc(local, zone);
     }
 
-    private TimeZoneInfo FindTimeZone()
+    /// <summary>
+    /// Whether <paramref name="timeZoneId"/> is a time zone this server knows, so that the dates of
+    /// the hotel can be computed (checked before a hotel is saved, FR-05).
+    /// </summary>
+    public static bool IsKnownTimeZone(string timeZoneId)
     {
         try
         {
-            return TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId);
+            FindTimeZone(timeZoneId);
+            return true;
         }
-        catch (TimeZoneNotFoundException) when (TimeZoneId == "Europe/Kyiv")
+        catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException or ArgumentException)
+        {
+            return false;
+        }
+    }
+
+    private TimeZoneInfo FindTimeZone() => FindTimeZone(TimeZoneId);
+
+    private static TimeZoneInfo FindTimeZone(string timeZoneId)
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+        }
+        catch (TimeZoneNotFoundException) when (timeZoneId == "Europe/Kyiv")
         {
             // Windows builds with an older ICU know Kyiv only by its former IANA id.
             return TimeZoneInfo.FindSystemTimeZoneById("Europe/Kiev");
