@@ -195,17 +195,28 @@ public class RoomService(ZatyshokDbContext db, IHotelScope scope, ILogger<RoomSe
         }
     }
 
+    /// <summary>
+    /// The number is unique within the hotel (FR-06, UC-08 A1). A usual duplicate is found by the query first
+    /// (409 without a failed command in the log); the unique index catches two requests at the same moment.
+    /// </summary>
     private async Task SaveAsync(Room room, CancellationToken cancellationToken)
     {
+        if (await db.Rooms.AnyAsync(r => r.HotelId == room.HotelId && r.Number == room.Number && r.Id != room.Id, cancellationToken))
+        {
+            throw Duplicate(room);
+        }
+
         try
         {
             await db.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateException ex) when (ex.IsUniqueViolation("IX_Rooms_HotelId_Number"))
         {
-            throw new DomainException($"Номер «{room.Number}» у цьому готелі вже є.");
+            throw Duplicate(room);
         }
     }
+
+    private static DomainException Duplicate(Room room) => new($"Номер «{room.Number}» у цьому готелі вже є.");
 
     private static void Apply(Room room, RoomData data, RoomCategory category)
     {

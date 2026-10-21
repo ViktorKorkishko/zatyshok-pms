@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 namespace Zatyshok.Tests.Integration.Api;
 
 /// <summary>One log record with the values of the scopes it was written in (e.g. CorrelationId).</summary>
-internal sealed record CapturedLog(string Category, string Message, IReadOnlyDictionary<string, object?> ScopeValues);
+internal sealed record CapturedLog(string Category, LogLevel Level, string Message, IReadOnlyDictionary<string, object?> ScopeValues);
 
 /// <summary>
 /// A logger provider that keeps the records in memory, for tests of what the API writes to the log.
@@ -50,7 +50,7 @@ internal sealed class CapturedLogs : ILoggerProvider, ISupportExternalScope
                 },
                 values);
 
-            owner._records.Enqueue(new CapturedLog(category, formatter(state, exception), values));
+            owner._records.Enqueue(new CapturedLog(category, logLevel, formatter(state, exception), values));
         }
     }
 }

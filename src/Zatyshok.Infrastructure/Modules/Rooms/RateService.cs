@@ -56,6 +56,14 @@ public class RateService(ZatyshokDbContext db, IHotelScope scope)
             throw new DomainException($"Категорію «{category.Name}» деактивовано. Оберіть діючу категорію.");
         }
 
+        // FR-08: exactly one rate per pair. A usual duplicate is found by the query first (409 without a failed
+        // command in the log); the unique index catches two requests at the same moment.
+        var duplicate = new DomainException($"Тариф категорії «{category.Name}» у цьому готелі вже є. Змініть його ціну.");
+        if (await db.Rates.AnyAsync(r => r.HotelId == hotelId && r.RoomCategoryId == roomCategoryId, cancellationToken))
+        {
+            throw duplicate;
+        }
+
         var rate = new Rate { HotelId = hotelId, RoomCategoryId = roomCategoryId, BasePricePerNight = basePricePerNight };
         db.Rates.Add(rate);
         try
@@ -64,8 +72,7 @@ public class RateService(ZatyshokDbContext db, IHotelScope scope)
         }
         catch (DbUpdateException ex) when (ex.IsUniqueViolation("IX_Rates_HotelId_RoomCategoryId"))
         {
-            // FR-08: exactly one rate per pair.
-            throw new DomainException($"Тариф категорії «{category.Name}» у цьому готелі вже є. Змініть його ціну.");
+            throw duplicate;
         }
 
         return await GetAsync(rate.Id, cancellationToken);

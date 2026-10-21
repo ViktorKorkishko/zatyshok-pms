@@ -87,18 +87,29 @@ public class RoomCategoryService(ZatyshokDbContext db)
         }
     }
 
+    /// <summary>
+    /// Categories are shared by the network, so the name is unique (RoomCategoryConfiguration). A usual
+    /// duplicate is found by the query first and gives 409 without a failed command in the log; the unique
+    /// index still catches two requests at the same moment, which both pass the query.
+    /// </summary>
     private async Task SaveAsync(RoomCategory category, CancellationToken cancellationToken)
     {
+        if (await db.RoomCategories.AnyAsync(c => c.Name == category.Name && c.Id != category.Id, cancellationToken))
+        {
+            throw Duplicate(category);
+        }
+
         try
         {
             await db.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateException ex) when (ex.IsUniqueViolation("IX_RoomCategories_Name"))
         {
-            // Categories are shared by the network, so the name must be unique (RoomCategoryConfiguration).
-            throw new DomainException($"Категорія «{category.Name}» уже існує.");
+            throw Duplicate(category);
         }
     }
+
+    private static DomainException Duplicate(RoomCategory category) => new($"Категорія «{category.Name}» уже існує.");
 
     private async Task<RoomCategory> FindAsync(Guid id, CancellationToken cancellationToken)
         => await db.RoomCategories.SingleOrDefaultAsync(c => c.Id == id, cancellationToken) ?? throw NotFound();

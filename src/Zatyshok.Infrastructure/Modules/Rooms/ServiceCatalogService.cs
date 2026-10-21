@@ -71,17 +71,28 @@ public class ServiceCatalogService(ZatyshokDbContext db)
         }
     }
 
+    /// <summary>
+    /// The name is unique in the catalog. A usual duplicate is found by the query first (409 without a failed
+    /// command in the log); the unique index catches two requests at the same moment.
+    /// </summary>
     private async Task SaveAsync(Service service, CancellationToken cancellationToken)
     {
+        if (await db.Services.AnyAsync(s => s.Name == service.Name && s.Id != service.Id, cancellationToken))
+        {
+            throw Duplicate(service);
+        }
+
         try
         {
             await db.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateException ex) when (ex.IsUniqueViolation("IX_Services_Name"))
         {
-            throw new DomainException($"Послуга «{service.Name}» уже існує.");
+            throw Duplicate(service);
         }
     }
+
+    private static DomainException Duplicate(Service service) => new($"Послуга «{service.Name}» уже існує.");
 
     private async Task<Service> FindAsync(Guid id, CancellationToken cancellationToken)
         => await db.Services.SingleOrDefaultAsync(s => s.Id == id, cancellationToken) ?? throw NotFound();

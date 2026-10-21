@@ -1,4 +1,6 @@
 using System.Net;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Zatyshok.Api.Common.Paging;
 using Zatyshok.Api.Modules.Rooms;
 
@@ -43,13 +45,18 @@ public class RoomCategoriesApiTests(ApiFixture api) : IClassFixture<ApiFixture>
     }
 
     [Fact]
-    public async Task DuplicateNameGives409()
+    public async Task DuplicateNameGives409WithoutAnErrorInTheLog()
     {
-        // The unique index IX_RoomCategories_Name gives 23505, which the service turns into a message.
-        var response = await api.Client.PostJsonAsync(Url, new { name = "Standard", capacity = 2 });
+        // The service finds the duplicate by a query before saving, so EF does not log a failed INSERT
+        // (an expected 409 must not look like a server error in the log); 23505 is only the fallback for a race.
+        var logs = new CapturedLogs();
+        var client = api.CreateClient(services => services.AddSingleton<ILoggerProvider>(logs));
+
+        var response = await client.PostJsonAsync(Url, new { name = "Standard", capacity = 2 });
 
         var problem = await Problem.ReadAsync(response, HttpStatusCode.Conflict);
         Assert.Equal("Категорія «Standard» уже існує.", problem.Detail);
+        Assert.DoesNotContain(logs.Records, r => r.Level >= LogLevel.Error);
     }
 
     [Fact]
