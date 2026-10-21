@@ -33,7 +33,7 @@ public class RatesController(RateService rates) : ControllerBase
     }
 
     /// <summary>Тариф.</summary>
-    /// <param name="id">Ідентифікатор тарифу.</param>
+    /// <param name="id" example="44444444-4444-4444-4444-444444440000">Ідентифікатор тарифу.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Тариф.</response>
     /// <response code="404">Тариф не знайдено.</response>
@@ -68,7 +68,7 @@ public class RatesController(RateService rates) : ControllerBase
 
     /// <summary>Змінити базову ціну тарифу.</summary>
     /// <remarks>Нова ціна діє для нових бронювань: бронювання зберігає ціни ночей, зафіксовані під час створення.</remarks>
-    /// <param name="id">Ідентифікатор тарифу.</param>
+    /// <param name="id" example="44444444-4444-4444-4444-444444440000">Ідентифікатор тарифу.</param>
     /// <param name="request">Нова базова ціна.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Тариф після зміни.</response>

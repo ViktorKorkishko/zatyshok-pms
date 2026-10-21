@@ -52,7 +52,7 @@ public class ApiPipelineTests(ApiFixture api) : IClassFixture<ApiFixture>
     }
 
     [Fact]
-    public async Task SwaggerDescribesEveryEndpointWithItsRolesMediaTypesAndErrorExamples()
+    public async Task SwaggerDescribesEveryEndpointWithItsRolesMediaTypesAndExamples()
     {
         var response = await api.Client.GetAsync("/swagger/v1/swagger.json");
         await response.AssertStatusAsync(HttpStatusCode.OK);
@@ -73,6 +73,15 @@ public class ApiPipelineTests(ApiFixture api) : IClassFixture<ApiFixture>
         {
             Assert.False(string.IsNullOrWhiteSpace(operation.GetProperty("summary").GetString()), $"{name}: no summary");
             Assert.Contains("**Ролі (перевірка з T4):**", operation.GetProperty("description").GetString());
+
+            // "Try it out" starts with the id of a seeded record, except for DELETE, which would remove it.
+            if (operation.TryGetProperty("parameters", out var parameters)
+                && parameters.EnumerateArray().FirstOrDefault(p => p.GetProperty("in").GetString() == "path") is { ValueKind: JsonValueKind.Object } id)
+            {
+                var hasExample = id.TryGetProperty("example", out _);
+                Assert.True(hasExample != name.StartsWith("DELETE"), $"{name}: example of the id is {(hasExample ? "present" : "missing")}");
+            }
+
             foreach (var (code, content) in operation.GetProperty("responses").EnumerateObject()
                          .Where(r => r.Value.TryGetProperty("content", out _))
                          .Select(r => (r.Name, r.Value.GetProperty("content"))))

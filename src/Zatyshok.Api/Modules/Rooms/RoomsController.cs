@@ -38,7 +38,7 @@ public class RoomsController(RoomService rooms) : ControllerBase
     }
 
     /// <summary>Картка номера.</summary>
-    /// <param name="id">Ідентифікатор номера.</param>
+    /// <param name="id" example="33333333-3333-3333-3333-333333330000">Ідентифікатор номера.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Номер.</response>
     /// <response code="404">Номер не знайдено.</response>
@@ -76,7 +76,7 @@ public class RoomsController(RoomService rooms) : ControllerBase
     /// Замінює всі поля номера. Категорію заброньованого або зайнятого номера змінити не можна: вона
     /// має збігатися з категорією бронювання.
     /// </remarks>
-    /// <param name="id">Ідентифікатор номера.</param>
+    /// <param name="id" example="33333333-3333-3333-3333-333333330000">Ідентифікатор номера.</param>
     /// <param name="request">Нові значення полів.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Номер після зміни.</response>
@@ -98,7 +98,7 @@ public class RoomsController(RoomService rooms) : ControllerBase
     /// виключається з доступності (FR-07, FR-30). Несправність у зайнятому номері записують у примітки,
     /// а з заброньованого номера спершу знімають призначення (UC-16 А1).
     /// </remarks>
-    /// <param name="id">Ідентифікатор номера.</param>
+    /// <param name="id" example="33333333-3333-3333-3333-333333330000">Ідентифікатор номера.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Номер після зміни.</response>
     /// <response code="404">Номер не знайдено.</response>
@@ -113,7 +113,7 @@ public class RoomsController(RoomService rooms) : ControllerBase
 
     /// <summary>Повернути номер в експлуатацію.</summary>
     /// <remarks>Номер «на ремонті» переходить у стан «потребує прибирання» (FR-07).</remarks>
-    /// <param name="id">Ідентифікатор номера.</param>
+    /// <param name="id" example="33333333-3333-3333-3333-333333330000">Ідентифікатор номера.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Номер після зміни.</response>
     /// <response code="404">Номер не знайдено.</response>
@@ -131,7 +131,7 @@ public class RoomsController(RoomService rooms) : ControllerBase
     /// Номер з історією проживання не видаляють, а деактивують: він зникає з доступності (UC-08).
     /// Зайнятий номер деактивувати не можна (UC-08 А2).
     /// </remarks>
-    /// <param name="id">Ідентифікатор номера.</param>
+    /// <param name="id" example="33333333-3333-3333-3333-333333330000">Ідентифікатор номера.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Номер після зміни.</response>
     /// <response code="404">Номер не знайдено.</response>
@@ -145,7 +145,7 @@ public class RoomsController(RoomService rooms) : ControllerBase
         => RoomResponse.From(await rooms.DeactivateAsync(id, cancellationToken));
 
     /// <summary>Знову активувати номер.</summary>
-    /// <param name="id">Ідентифікатор номера.</param>
+    /// <param name="id" example="33333333-3333-3333-3333-333333330000">Ідентифікатор номера.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Номер після зміни.</response>
     /// <response code="404">Номер не знайдено.</response>
@@ -163,6 +163,7 @@ public class RoomsController(RoomService rooms) : ControllerBase
     /// <response code="204">Номер видалено.</response>
     /// <response code="404">Номер не знайдено.</response>
     /// <response code="409">Номер має історію; деактивуйте його.</response>
+    // No example id, unlike the other actions: "Try it out" in Swagger would delete a seeded record.
     [HttpDelete("{id:guid}")]
     [AllowedRoles(Roles.Administrator, Roles.HotelManager)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

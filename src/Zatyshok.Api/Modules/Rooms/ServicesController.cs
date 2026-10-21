@@ -30,7 +30,7 @@ public class ServicesController(ServiceCatalogService services) : ControllerBase
     }
 
     /// <summary>Послуга.</summary>
-    /// <param name="id">Ідентифікатор послуги.</param>
+    /// <param name="id" example="88888888-8888-8888-8888-888888888801">Ідентифікатор послуги.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Послуга.</response>
     /// <response code="404">Послугу не знайдено.</response>
@@ -60,7 +60,7 @@ public class ServicesController(ServiceCatalogService services) : ControllerBase
 
     /// <summary>Змінити послугу.</summary>
     /// <remarks>Нова ціна діє для нових позицій рахунків; виставлені рахунки зберігають скопійовані назву й ціну.</remarks>
-    /// <param name="id">Ідентифікатор послуги.</param>
+    /// <param name="id" example="88888888-8888-8888-8888-888888888801">Ідентифікатор послуги.</param>
     /// <param name="request">Нові значення полів.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Послуга після зміни.</response>
@@ -78,7 +78,7 @@ public class ServicesController(ServiceCatalogService services) : ControllerBase
 
     /// <summary>Деактивувати послугу.</summary>
     /// <remarks>Послугу, яку вже додано до рахунків, не видаляють, а деактивують (UC-11).</remarks>
-    /// <param name="id">Ідентифікатор послуги.</param>
+    /// <param name="id" example="88888888-8888-8888-8888-888888888801">Ідентифікатор послуги.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Послуга після зміни.</response>
     /// <response code="404">Послугу не знайдено.</response>
@@ -90,7 +90,7 @@ public class ServicesController(ServiceCatalogService services) : ControllerBase
         => ServiceResponse.From(await services.SetActiveAsync(id, isActive: false, cancellationToken));
 
     /// <summary>Знову активувати послугу.</summary>
-    /// <param name="id">Ідентифікатор послуги.</param>
+    /// <param name="id" example="88888888-8888-8888-8888-888888888801">Ідентифікатор послуги.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Послуга після зміни.</response>
     /// <response code="404">Послугу не знайдено.</response>
@@ -108,6 +108,7 @@ public class ServicesController(ServiceCatalogService services) : ControllerBase
     /// <response code="204">Послугу видалено.</response>
     /// <response code="404">Послугу не знайдено.</response>
     /// <response code="409">Послуга використовується; деактивуйте її.</response>
+    // No example id, unlike the other actions: "Try it out" in Swagger would delete a seeded record.
     [HttpDelete("{id:guid}")]
     [AllowedRoles(Roles.Administrator)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

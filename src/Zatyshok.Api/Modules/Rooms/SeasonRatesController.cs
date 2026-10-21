@@ -32,7 +32,7 @@ public class SeasonRatesController(SeasonRateService seasons) : ControllerBase
     }
 
     /// <summary>Сезонний період.</summary>
-    /// <param name="id">Ідентифікатор періоду.</param>
+    /// <param name="id" example="55555555-5555-5555-5555-555555555501">Ідентифікатор періоду.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Період.</response>
     /// <response code="404">Період не знайдено.</response>
@@ -64,7 +64,7 @@ public class SeasonRatesController(SeasonRateService seasons) : ControllerBase
 
     /// <summary>Змінити сезонний період.</summary>
     /// <remarks>Нові дати й ціна діють для нових бронювань; наявні зберігають зафіксовані ціни ночей.</remarks>
-    /// <param name="id">Ідентифікатор періоду.</param>
+    /// <param name="id" example="55555555-5555-5555-5555-555555555501">Ідентифікатор періоду.</param>
     /// <param name="request">Нові значення полів.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Період після зміни.</response>
@@ -86,6 +86,7 @@ public class SeasonRatesController(SeasonRateService seasons) : ControllerBase
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="204">Період видалено.</response>
     /// <response code="404">Період не знайдено.</response>
+    // No example id, unlike the other actions: "Try it out" in Swagger would delete a seeded record.
     [HttpDelete("{id:guid}")]
     [AllowedRoles(Roles.Administrator, Roles.ReservationAgent)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

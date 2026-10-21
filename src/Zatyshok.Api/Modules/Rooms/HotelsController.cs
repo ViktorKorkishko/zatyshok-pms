@@ -30,7 +30,7 @@ public class HotelsController(HotelService hotels) : ControllerBase
     }
 
     /// <summary>Картка готелю.</summary>
-    /// <param name="id">Ідентифікатор готелю.</param>
+    /// <param name="id" example="22222222-2222-2222-2222-222222222201">Ідентифікатор готелю.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Готель.</response>
     /// <response code="404">Готель не знайдено.</response>
@@ -62,7 +62,7 @@ public class HotelsController(HotelService hotels) : ControllerBase
     /// Замінює всі поля готелю. Нові правила скасування діють для бронювань, створених після зміни;
     /// наявні бронювання зберігають обчислений раніше граничний термін (FR-15).
     /// </remarks>
-    /// <param name="id">Ідентифікатор готелю.</param>
+    /// <param name="id" example="22222222-2222-2222-2222-222222222201">Ідентифікатор готелю.</param>
     /// <param name="request">Нові значення полів.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Готель після зміни.</response>
@@ -78,7 +78,7 @@ public class HotelsController(HotelService hotels) : ControllerBase
 
     /// <summary>Деактивувати готель.</summary>
     /// <remarks>Готель з бронюваннями не видаляється, а деактивується (FR-05): історія зберігається.</remarks>
-    /// <param name="id">Ідентифікатор готелю.</param>
+    /// <param name="id" example="22222222-2222-2222-2222-222222222201">Ідентифікатор готелю.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Готель після зміни.</response>
     /// <response code="404">Готель не знайдено.</response>
@@ -90,7 +90,7 @@ public class HotelsController(HotelService hotels) : ControllerBase
         => HotelResponse.From(await hotels.SetActiveAsync(id, isActive: false, cancellationToken));
 
     /// <summary>Знову активувати готель.</summary>
-    /// <param name="id">Ідентифікатор готелю.</param>
+    /// <param name="id" example="22222222-2222-2222-2222-222222222201">Ідентифікатор готелю.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Готель після зміни.</response>
     /// <response code="404">Готель не знайдено.</response>
@@ -111,6 +111,7 @@ public class HotelsController(HotelService hotels) : ControllerBase
     /// <response code="204">Готель видалено.</response>
     /// <response code="404">Готель не знайдено.</response>
     /// <response code="409">Готель використовується; деактивуйте його.</response>
+    // No example id, unlike the other actions: "Try it out" in Swagger would delete a seeded record.
     [HttpDelete("{id:guid}")]
     [AllowedRoles(Roles.Administrator)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

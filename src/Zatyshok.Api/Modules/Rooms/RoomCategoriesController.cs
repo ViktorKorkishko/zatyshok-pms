@@ -30,7 +30,7 @@ public class RoomCategoriesController(RoomCategoryService categories) : Controll
     }
 
     /// <summary>Категорія номерів.</summary>
-    /// <param name="id">Ідентифікатор категорії.</param>
+    /// <param name="id" example="11111111-1111-1111-1111-111111111101">Ідентифікатор категорії.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Категорія.</response>
     /// <response code="404">Категорію не знайдено.</response>
@@ -60,7 +60,7 @@ public class RoomCategoriesController(RoomCategoryService categories) : Controll
 
     /// <summary>Змінити категорію номерів.</summary>
     /// <remarks>Місткість категорії — типова для нових номерів; наявні номери зберігають свою місткість (FR-06).</remarks>
-    /// <param name="id">Ідентифікатор категорії.</param>
+    /// <param name="id" example="11111111-1111-1111-1111-111111111101">Ідентифікатор категорії.</param>
     /// <param name="request">Нові значення полів.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Категорія після зміни.</response>
@@ -78,7 +78,7 @@ public class RoomCategoriesController(RoomCategoryService categories) : Controll
 
     /// <summary>Деактивувати категорію номерів.</summary>
     /// <remarks>Категорію, яку мають номери або бронювання, не видаляють, а деактивують (UC-11).</remarks>
-    /// <param name="id">Ідентифікатор категорії.</param>
+    /// <param name="id" example="11111111-1111-1111-1111-111111111101">Ідентифікатор категорії.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Категорія після зміни.</response>
     /// <response code="404">Категорію не знайдено.</response>
@@ -90,7 +90,7 @@ public class RoomCategoriesController(RoomCategoryService categories) : Controll
         => RoomCategoryResponse.From(await categories.SetActiveAsync(id, isActive: false, cancellationToken));
 
     /// <summary>Знову активувати категорію номерів.</summary>
-    /// <param name="id">Ідентифікатор категорії.</param>
+    /// <param name="id" example="11111111-1111-1111-1111-111111111101">Ідентифікатор категорії.</param>
     /// <param name="cancellationToken">Скасування запиту.</param>
     /// <response code="200">Категорія після зміни.</response>
     /// <response code="404">Категорію не знайдено.</response>
@@ -108,6 +108,7 @@ public class RoomCategoriesController(RoomCategoryService categories) : Controll
     /// <response code="204">Категорію видалено.</response>
     /// <response code="404">Категорію не знайдено.</response>
     /// <response code="409">Категорія використовується; деактивуйте її.</response>
+    // No example id, unlike the other actions: "Try it out" in Swagger would delete a seeded record.
     [HttpDelete("{id:guid}")]
     [AllowedRoles(Roles.Administrator)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
