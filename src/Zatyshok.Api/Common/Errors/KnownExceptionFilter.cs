@@ -1,21 +1,34 @@
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Zatyshok.Api.Common.Validation;
 using Zatyshok.Domain.Common;
 
 namespace Zatyshok.Api.Common.Errors;
 
 /// <summary>
 /// Turns the expected exceptions of the services into ProblemDetails responses (technical decisions
-/// of the API: 404, 409 for a conflict of state). It is an MVC filter, not the exception handler
-/// middleware, because that middleware logs every exception as an error, and a forbidden transition
-/// is a normal answer, not a failure. Any other exception reaches UseExceptionHandler and gives 500.
+/// of the API: 400 for a value only a service can check, 404, 409 for a conflict of state). It is an
+/// MVC filter, not the exception handler middleware, because that middleware logs every exception as
+/// an error, and a forbidden transition is a normal answer, not a failure. Any other exception reaches
+/// UseExceptionHandler and gives 500.
 /// </summary>
 public sealed class KnownExceptionFilter(ILogger<KnownExceptionFilter> logger) : IExceptionFilter
 {
     /// <inheritdoc />
     public void OnException(ExceptionContext context)
     {
+        // A value that only the service could check, because the rule needs data (e.g. the hotel's current
+        // date): the same 400 as for a validator error, with the message under the name of the field.
+        if (context.Exception is InvalidRequestException invalid)
+        {
+            logger.LogInformation("Request rejected with 400: {Field}: {Detail}", invalid.Field, invalid.Message);
+            context.ModelState.AddModelError(invalid.Field, invalid.Message);
+            context.Result = ValidationProblems.CreateResult(context);
+            context.ExceptionHandled = true;
+            return;
+        }
+
         if (Map(context.Exception) is not { } mapped)
         {
             return;
