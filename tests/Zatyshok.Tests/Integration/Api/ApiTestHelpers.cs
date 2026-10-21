@@ -21,6 +21,9 @@ internal static class Seed
     /// <summary>Room 101 (Standard) of «Затишок Київ»: hotel index 0, room index 0.</summary>
     public static readonly Guid KyivRoom101 = DevelopmentDataSeeder.RoomId(0, 0);
 
+    /// <summary>Room 101 (Standard) of «Затишок Львів»: hotel index 1, room index 0.</summary>
+    public static readonly Guid LvivRoom101 = DevelopmentDataSeeder.RoomId(1, 0);
+
     /// <summary>Rate Standard of «Затишок Київ», 2500 UAH per night.</summary>
     public static readonly Guid KyivStandardRate = DevelopmentDataSeeder.RateId(0, 0);
 
