@@ -15,6 +15,8 @@ public class AvailabilityCalculatorTests
     public void ExampleOf12_8_2GivesOneRoomWhereTheOverlapFormulaGaveZero()
     {
         // 2 rooms; booking A 10–12.10 takes the nights 10 and 11, booking B 12–14.10 the nights 12 and 13.
+        // The literal formula of report 1 subtracts both bookings, because both periods overlap the request,
+        // and gives 2 − 2 = 0; the application has no code of that formula to test, only the per-night one.
         var bookings = new[] { (CheckIn: October10, CheckOut: new DateOnly(2026, 10, 12)), (CheckIn: new DateOnly(2026, 10, 12), CheckOut: October14) };
         var bookedPerNight = bookings
             .SelectMany(b => Enumerable.Range(0, b.CheckOut.DayNumber - b.CheckIn.DayNumber).Select(b.CheckIn.AddDays))
@@ -22,10 +24,6 @@ public class AvailabilityCalculatorTests
             .ToDictionary(g => g.Key, g => g.Count());
 
         var nights = AvailabilityCalculator.FreeRoomsPerNight(2, bookedPerNight, October10, October14);
-
-        // The literal formula of report 1: rooms minus the bookings whose period overlaps the request.
-        var overlapping = bookings.Count(b => b.CheckIn < October14 && b.CheckOut > October10);
-        Assert.Equal(0, 2 - overlapping);
 
         // Per night only one room is taken, so one room is free for the whole stay.
         Assert.Equal([1, 1, 1, 1], nights.Select(n => n.FreeRooms));
