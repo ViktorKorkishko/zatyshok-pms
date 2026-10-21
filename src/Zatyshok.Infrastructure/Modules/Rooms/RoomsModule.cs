@@ -12,6 +12,8 @@ public static class RoomsModule
         services.AddScoped<RoomCategoryService>();
         services.AddScoped<ServiceCatalogService>();
         services.AddScoped<RoomService>();
+        services.AddScoped<RateService>();
+        services.AddScoped<SeasonRateService>();
         return services;
     }
 }

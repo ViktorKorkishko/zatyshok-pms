@@ -27,6 +27,9 @@ internal static class Seed
     /// <summary>Rate Standard of «Затишок Київ», 2500 UAH per night.</summary>
     public static readonly Guid KyivStandardRate = DevelopmentDataSeeder.RateId(0, 0);
 
+    /// <summary>Rate Standard of «Затишок Львів».</summary>
+    public static readonly Guid LvivStandardRate = DevelopmentDataSeeder.RateId(1, 0);
+
     public static readonly Guid Breakfast = DevelopmentDataSeeder.ServiceId(1);
 }
 

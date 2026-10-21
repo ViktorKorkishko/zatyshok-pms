@@ -9,7 +9,8 @@ namespace Zatyshok.Infrastructure.Modules.Rooms;
 /// The lock of 12.8.2 (listing 12.1, step 1). Every transaction that reduces the availability of a
 /// pair «hotel – category» first locks the rate row of the pair with SELECT … FOR UPDATE, so a
 /// booking being created for the pair waits for it and then counts the rooms again. In this module
-/// that is a room put out of order, deactivated, deleted or moved to another category.
+/// that is a room put out of order, deactivated, deleted or moved to another category. The seasonal
+/// periods of a rate change under the same lock (SeasonRateService).
 /// </summary>
 internal static class RateLock
 {
@@ -27,14 +28,25 @@ internal static class RateLock
     /// </summary>
     public static async Task LockAsync(ZatyshokDbContext db, Guid hotelId, Guid roomCategoryId, CancellationToken cancellationToken)
     {
+        EnsureTransaction(db);
+        await db.Database.ExecuteSqlAsync(
+            $"""SELECT 1 FROM rooms."Rates" WHERE "HotelId" = {hotelId} AND "RoomCategoryId" = {roomCategoryId} FOR UPDATE""",
+            cancellationToken);
+    }
+
+    /// <summary>The same lock for a rate known by its id.</summary>
+    public static async Task LockAsync(ZatyshokDbContext db, Guid rateId, CancellationToken cancellationToken)
+    {
+        EnsureTransaction(db);
+        await db.Database.ExecuteSqlAsync($"""SELECT 1 FROM rooms."Rates" WHERE "Id" = {rateId} FOR UPDATE""", cancellationToken);
+    }
+
+    private static void EnsureTransaction(ZatyshokDbContext db)
+    {
         if (db.Database.CurrentTransaction is null)
         {
             // Outside a transaction PostgreSQL would release the lock right after the command.
             throw new InvalidOperationException("The rate lock needs a transaction; start one with RateLock.BeginAsync.");
         }
-
-        await db.Database.ExecuteSqlAsync(
-            $"""SELECT 1 FROM rooms."Rates" WHERE "HotelId" = {hotelId} AND "RoomCategoryId" = {roomCategoryId} FOR UPDATE""",
-            cancellationToken);
     }
 }
