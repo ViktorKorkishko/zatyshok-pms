@@ -197,9 +197,12 @@ public class AvailabilityApiTests(ApiFixture api) : IClassFixture<ApiFixture>
     [Fact]
     public async Task CheckedInBookingCountsButCompletedAndNoShowDoNot()
     {
+        // A fixed "now" for the bookings and the search alike: with the real clock, midnight in Kyiv between
+        // reading today and the search would make the check-in a past date (the same risk as bug No. 17).
         var hotel = await CreateHotelAsync(roomCount: 2);
-        var today = hotel.Today;
-        var now = DateTime.UtcNow;
+        var clock = new DateTimeOffset(2030, 3, 1, 10, 0, 0, TimeSpan.Zero);
+        var now = clock.UtcDateTime;
+        var today = hotel.Hotel.GetLocalDate(now);
 
         await using (var db = api.CreateDbContext())
         {
@@ -226,7 +229,7 @@ public class AvailabilityApiTests(ApiFixture api) : IClassFixture<ApiFixture>
             await db.SaveChangesAsync();
         }
 
-        var category = await SearchOneCategoryAsync(hotel, today, today.AddDays(3));
+        var category = await SearchOneCategoryAsync(hotel, today, today.AddDays(3), ClientAt(clock));
 
         Assert.Equal([1, 1, 2], category.Nights.Select(n => n.FreeRooms));
         Assert.Equal(1, category.AvailableRooms);
@@ -371,10 +374,11 @@ public class AvailabilityApiTests(ApiFixture api) : IClassFixture<ApiFixture>
     private static async Task<AvailabilityResponse> Search(HttpClient client, string query)
         => await (await client.GetAsync($"{Url}?{query}")).ReadAsync<AvailabilityResponse>();
 
-    /// <summary>The only category of a <see cref="TestData"/> hotel for the stay.</summary>
-    private async Task<CategoryAvailabilityResponse> SearchOneCategoryAsync(TestHotel hotel, DateOnly checkIn, DateOnly checkOut)
+    /// <summary>The only category of a <see cref="TestData"/> hotel for the stay; by default with the real clock.</summary>
+    private async Task<CategoryAvailabilityResponse> SearchOneCategoryAsync(
+        TestHotel hotel, DateOnly checkIn, DateOnly checkOut, HttpClient? client = null)
     {
-        var response = await Search(api.Client, $"hotelId={hotel.Hotel.Id}&checkIn={checkIn:yyyy-MM-dd}&checkOut={checkOut:yyyy-MM-dd}&guests=1");
+        var response = await Search(client ?? api.Client, $"hotelId={hotel.Hotel.Id}&checkIn={checkIn:yyyy-MM-dd}&checkOut={checkOut:yyyy-MM-dd}&guests=1");
         var category = Assert.Single(Assert.Single(response.Hotels).Categories);
         Assert.Equal(hotel.Category.Id, category.RoomCategoryId);
         return category;
