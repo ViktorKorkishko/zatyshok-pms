@@ -103,12 +103,22 @@ public class ApiConventionTests
         var action = FindAction(actionName);
         var types = action.GetParameters().Select(p => p.ParameterType).Append(action.ReturnType);
 
-        foreach (var type in types.SelectMany(Flatten))
+        foreach (var type in Reachable(types))
         {
             Assert.False(
                 type.Namespace?.StartsWith("Zatyshok.Domain.Modules", StringComparison.Ordinal) == true && !type.IsEnum,
                 $"{actionName} exposes the entity {type.FullName}");
         }
+    }
+
+    [Fact]
+    public void DtoCheckLooksIntoPropertiesOfDtos()
+    {
+        // Control for the rule above: an entity hidden in a property of a DTO, or in a list of them, is found.
+        var reachable = Reachable([typeof(Task<DtoWithEntities>)]).ToList();
+
+        Assert.Contains(typeof(Zatyshok.Domain.Modules.Rooms.Room), reachable);
+        Assert.Contains(typeof(Zatyshok.Domain.Modules.Rooms.SeasonRate), reachable);
     }
 
     [Fact]
@@ -157,7 +167,49 @@ public class ApiConventionTests
     private static MethodInfo FindAction(string name)
         => Controllers.SelectMany(ActionsOf).Single(a => $"{a.DeclaringType!.Name}.{a.Name}" == name);
 
-    /// <summary>The type and its generic arguments, recursively: Task&lt;PagedResponse&lt;RoomResponse&gt;&gt; → all three.</summary>
-    private static IEnumerable<Type> Flatten(Type type)
-        => type.IsGenericType ? type.GetGenericArguments().SelectMany(Flatten).Prepend(type) : [type];
+    /// <summary>
+    /// The types an endpoint takes or returns, and everything reachable from them: generic arguments
+    /// (Task&lt;PagedResponse&lt;RoomResponse&gt;&gt; → all three), array elements and the types of the public
+    /// properties of the API's own types (DTOs), recursively. A visited set stops at cycles.
+    /// </summary>
+    private static IEnumerable<Type> Reachable(IEnumerable<Type> start)
+    {
+        var visited = new HashSet<Type>();
+        var queue = new Queue<Type>(start);
+        while (queue.TryDequeue(out var type))
+        {
+            if (!visited.Add(type))
+            {
+                continue;
+            }
+
+            var next = type.IsGenericType ? type.GetGenericArguments() : [];
+            if (type.GetElementType() is { } element)
+            {
+                next = [.. next, element];
+            }
+
+            // Only the API's own types (and the control DTO of this class): properties of framework types
+            // (Task, string) say nothing about DTOs.
+            if (type.Assembly == ApiAssembly || type.Assembly == typeof(ApiConventionTests).Assembly)
+            {
+                next = [.. next, .. type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(p => p.PropertyType)];
+            }
+
+            foreach (var other in next)
+            {
+                queue.Enqueue(other);
+            }
+        }
+
+        return visited;
+    }
+
+    /// <summary>A DTO that breaks the rule, for the control test.</summary>
+    private sealed class DtoWithEntities
+    {
+        public Zatyshok.Domain.Modules.Rooms.Room? Room { get; init; }
+
+        public List<Zatyshok.Domain.Modules.Rooms.SeasonRate> Seasons { get; init; } = [];
+    }
 }
