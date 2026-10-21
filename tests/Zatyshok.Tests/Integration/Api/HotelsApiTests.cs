@@ -182,9 +182,33 @@ public class HotelsApiTests(ApiFixture api) : IClassFixture<ApiFixture>
     }
 
     [Fact]
+    public async Task UpdateWithoutTheRulesOfTheHotelGives400AndKeepsThem()
+    {
+        var hotel = await CreateHotelAsync();
+        var rules = new { cancellationDeadlineDaysBefore = 3, cancellationDeadlineTime = "12:00:00", checkInTime = "15:00:00", checkOutTime = "11:00:00" };
+        await (await api.Client.PutJsonAsync($"{Url}/{hotel.Id}", new { hotel.Name, hotel.City, hotel.Address, hotel.Stars, hotel.TimeZoneId, rules.cancellationDeadlineDaysBefore, rules.cancellationDeadlineTime, rules.checkInTime, rules.checkOutTime }))
+            .AssertStatusAsync(HttpStatusCode.OK);
+
+        // Only a new phone: before the fix the rules silently went back to the defaults.
+        var response = await api.Client.PutJsonAsync($"{Url}/{hotel.Id}", new { hotel.Name, hotel.City, hotel.Address, hotel.Stars, hotel.TimeZoneId, phone = "+380561234999" });
+
+        var problem = await Problem.ReadAsync(response, HttpStatusCode.BadRequest);
+        Assert.Equal(
+            ["cancellationDeadlineDaysBefore", "cancellationDeadlineTime", "checkInTime", "checkOutTime"],
+            problem.Errors!.Keys.Order(StringComparer.Ordinal));
+        Assert.Equal("Вкажіть час заїзду.", Assert.Single(problem.Errors["checkInTime"]));
+        var read = await (await api.Client.GetAsync($"{Url}/{hotel.Id}")).ReadAsync<HotelResponse>();
+        Assert.Equal((3, new TimeOnly(15, 0), (string?)null), (read.CancellationDeadlineDaysBefore, read.CheckInTime, read.Phone));
+    }
+
+    [Fact]
     public async Task UpdateOfUnknownHotelGives404()
     {
-        var response = await api.Client.PutJsonAsync($"{Url}/{Guid.NewGuid()}", ValidHotel());
+        var response = await api.Client.PutJsonAsync($"{Url}/{Guid.NewGuid()}", new
+        {
+            name = "Х", city = "Х", address = "Х", stars = 3, timeZoneId = "Europe/Kyiv",
+            cancellationDeadlineDaysBefore = 1, cancellationDeadlineTime = "18:00:00", checkInTime = "14:00:00", checkOutTime = "12:00:00",
+        });
 
         await Problem.ReadAsync(response, HttpStatusCode.NotFound);
     }

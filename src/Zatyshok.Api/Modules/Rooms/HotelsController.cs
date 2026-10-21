@@ -51,7 +51,7 @@ public class HotelsController(HotelService hotels) : ControllerBase
     [AllowedRoles(Roles.Administrator)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<HotelResponse>> Create(HotelRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<HotelResponse>> Create(NewHotelRequest request, CancellationToken cancellationToken)
     {
         var hotel = await hotels.CreateAsync(request.ToData(), cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = hotel.Id }, HotelResponse.From(hotel));
@@ -59,8 +59,9 @@ public class HotelsController(HotelService hotels) : ControllerBase
 
     /// <summary>Змінити готель.</summary>
     /// <remarks>
-    /// Замінює всі поля готелю. Нові правила скасування діють для бронювань, створених після зміни;
-    /// наявні бронювання зберігають обчислений раніше граничний термін (FR-15).
+    /// Замінює всі поля готелю, тому правила готелю (скасування, час заїзду і виїзду) обов'язкові: зміна,
+    /// наприклад, лише телефону не скидає їх до типових. Нові правила скасування діють для бронювань,
+    /// створених після зміни; наявні бронювання зберігають обчислений раніше граничний термін (FR-15).
     /// </remarks>
     /// <param name="id" example="22222222-2222-2222-2222-222222222201">Ідентифікатор готелю.</param>
     /// <param name="request">Нові значення полів.</param>

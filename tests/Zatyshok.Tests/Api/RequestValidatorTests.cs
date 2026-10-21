@@ -8,7 +8,7 @@ namespace Zatyshok.Tests.Api;
 /// <summary>Rules of the request validators at their boundaries; the HTTP side is in Integration/Api.</summary>
 public class RequestValidatorTests
 {
-    private static HotelRequest ValidHotel() => new()
+    private static NewHotelRequest ValidHotel() => new()
     {
         Name = "Затишок Ужгород",
         City = "Ужгород",
@@ -42,9 +42,20 @@ public class RequestValidatorTests
     }
 
     [Fact]
-    public void HotelWithOnlyRequiredFieldsIsValid()
+    public void NewHotelWithOnlyRequiredFieldsIsValid()
     {
-        Assert.Empty(FailedFields(new HotelRequestValidator(), ValidHotel()));
+        Assert.Empty(FailedFields(new NewHotelRequestValidator(), ValidHotel()));
+    }
+
+    [Fact]
+    public void UpdateOfAHotelNeedsEveryRuleOfTheHotel()
+    {
+        // Otherwise an update that changes only the phone would reset the rules to the defaults.
+        var update = new HotelRequest { Name = "Х", City = "Х", Address = "Х", Stars = 3, TimeZoneId = "Europe/Kyiv" };
+
+        Assert.Equal(
+            ["CancellationDeadlineDaysBefore", "CancellationDeadlineTime", "CheckInTime", "CheckOutTime"],
+            FailedFields(new HotelRequestValidator(), update));
     }
 
     [Theory]
@@ -54,7 +65,7 @@ public class RequestValidatorTests
     [InlineData(6, false)]
     public void StarsAreFrom1To5(int stars, bool valid)
     {
-        var result = new HotelRequestValidator().Validate(new HotelRequest
+        var result = new NewHotelRequestValidator().Validate(new NewHotelRequest
         {
             Name = "Х", City = "Х", Address = "Х", TimeZoneId = "Europe/Kyiv", Stars = stars,
         });
@@ -69,12 +80,12 @@ public class RequestValidatorTests
     [InlineData(366, false)]
     public void CancellationDeadlineIsFrom0To365DaysBeforeCheckIn(int days, bool valid)
     {
-        var request = new HotelRequest
+        var request = new NewHotelRequest
         {
             Name = "Х", City = "Х", Address = "Х", Stars = 3, TimeZoneId = "Europe/Kyiv", CancellationDeadlineDaysBefore = days,
         };
 
-        Assert.Equal(valid, new HotelRequestValidator().Validate(request).IsValid);
+        Assert.Equal(valid, new NewHotelRequestValidator().Validate(request).IsValid);
     }
 
     [Theory]
@@ -85,9 +96,9 @@ public class RequestValidatorTests
     [InlineData("", false)]
     public void TimeZoneMustBeKnownToTheServer(string timeZoneId, bool valid)
     {
-        var request = new HotelRequest { Name = "Х", City = "Х", Address = "Х", Stars = 3, TimeZoneId = timeZoneId };
+        var request = new NewHotelRequest { Name = "Х", City = "Х", Address = "Х", Stars = 3, TimeZoneId = timeZoneId };
 
-        var errors = new HotelRequestValidator().Validate(request).Errors;
+        var errors = new NewHotelRequestValidator().Validate(request).Errors;
 
         Assert.Equal(valid, errors.Count == 0);
         Assert.True(errors.Count <= 1, "one message per field");
@@ -99,9 +110,9 @@ public class RequestValidatorTests
     [InlineData("kyiv.zatyshok.ua", false)]
     public void EmailIsOptionalButMustBeAnAddress(string? email, bool valid)
     {
-        var request = new HotelRequest { Name = "Х", City = "Х", Address = "Х", Stars = 3, TimeZoneId = "Europe/Kyiv", Email = email };
+        var request = new NewHotelRequest { Name = "Х", City = "Х", Address = "Х", Stars = 3, TimeZoneId = "Europe/Kyiv", Email = email };
 
-        Assert.Equal(valid, new HotelRequestValidator().Validate(request).IsValid);
+        Assert.Equal(valid, new NewHotelRequestValidator().Validate(request).IsValid);
     }
 
     [Fact]
@@ -113,6 +124,26 @@ public class RequestValidatorTests
         Assert.Equal(new TimeOnly(18, 0), data.CancellationDeadlineTime);
         Assert.Equal(new TimeOnly(14, 0), data.CheckInTime);
         Assert.Equal(new TimeOnly(12, 0), data.CheckOutTime);
+    }
+
+    [Fact]
+    public void CapacityIsRequiredOnlyInAnUpdateOfARoom()
+    {
+        var update = new RoomRequest { Number = "101", Floor = 1, RoomCategoryId = Guid.NewGuid() };
+        var newRoom = new NewRoomRequest { Number = "101", Floor = 1, RoomCategoryId = Guid.NewGuid(), HotelId = Guid.NewGuid() };
+
+        Assert.Equal(["Capacity"], FailedFields(new RoomRequestValidator(), update));
+        Assert.Empty(FailedFields(new NewRoomRequestValidator(), newRoom));
+    }
+
+    [Fact]
+    public void FloorOfARoomAndPriceOfAServiceAreRequired()
+    {
+        // 0 is a valid floor and a valid price, so a missing value must not become 0.
+        var room = new NewRoomRequest { Number = "101", RoomCategoryId = Guid.NewGuid(), HotelId = Guid.NewGuid() };
+
+        Assert.Equal(["Floor"], FailedFields(new NewRoomRequestValidator(), room));
+        Assert.Equal(["Price"], FailedFields(new ServiceRequestValidator(), new ServiceRequest { Name = "Пральня" }));
     }
 
     [Theory]

@@ -17,11 +17,12 @@ public sealed class ServiceRequest
     /// <example>Прання і прасування одягу гостя, за кілограм</example>
     public string? Description { get; init; }
 
-    /// <summary>Ціна в гривнях, від 0, до копійки.</summary>
+    /// <summary>Ціна в гривнях, від 0, до копійки; обов'язкова.</summary>
     /// <example>150.00</example>
-    public decimal Price { get; init; }
+    public decimal? Price { get; init; }
 
-    internal ServiceData ToData() => new(Name, Description, Price);
+    // The validator has checked that the price is given.
+    internal ServiceData ToData() => new(Name, Description, Price!.Value);
 }
 
 /// <summary>Додаткова послуга довідника.</summary>
@@ -75,7 +76,9 @@ public sealed class ServiceRequestValidator : RequestValidator<ServiceRequest>
             .MaximumLength(200).WithMessage("Назва послуги має бути не довшою за 200 символів.");
         RuleFor(s => s.Description)
             .MaximumLength(1000).WithMessage("Опис має бути не довшим за 1000 символів.");
+        // Nullable, because 0 is a valid price: a missing price would otherwise become 0 without an error.
         RuleFor(s => s.Price)
+            .NotNull().WithMessage("Вкажіть ціну послуги.")
             .GreaterThanOrEqualTo(0).WithMessage("Ціна не може бути від'ємною.")
             .MoneyAmount("Ціна");
     }

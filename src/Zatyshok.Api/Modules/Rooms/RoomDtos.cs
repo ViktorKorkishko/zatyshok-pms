@@ -15,7 +15,7 @@ public class RoomRequest
 
     /// <summary>Поверх.</summary>
     /// <example>3</example>
-    public int Floor { get; init; }
+    public int? Floor { get; init; }
 
     /// <summary>Категорія номера; для нового номера або зміни категорії — лише діюча.</summary>
     /// <example>11111111-1111-1111-1111-111111111101</example>
@@ -23,7 +23,8 @@ public class RoomRequest
 
     /// <summary>
     /// Місткість номера: не менша за базову місткість категорії, бо гості бронюють категорію; більша —
-    /// наприклад, з додатковим ліжком. Не вказано — як у категорії.
+    /// наприклад, з додатковим ліжком. Обов'язкова під час зміни номера; для нового номера, якщо не
+    /// вказано, — базова місткість категорії.
     /// </summary>
     /// <example>3</example>
     public int? Capacity { get; init; }
@@ -36,7 +37,8 @@ public class RoomRequest
     /// <example>Скриплять двері шафи.</example>
     public string? Notes { get; init; }
 
-    internal RoomData ToData() => new(Number, Floor, RoomCategoryId, Capacity, Amenities, Notes);
+    // The validators have checked that the floor is given (and the capacity of an update).
+    internal RoomData ToData() => new(Number, Floor!.Value, RoomCategoryId, Capacity, Amenities, Notes);
 }
 
 /// <summary>Новий номер готелю (FR-06).</summary>
@@ -133,15 +135,49 @@ public sealed class RoomListQuery : PageQuery
     public int? Floor { get; init; }
 }
 
-/// <summary>Rules of <see cref="RoomRequest"/>; the lengths are those of rooms.Rooms.</summary>
+/// <summary>
+/// Rules of <see cref="RoomRequest"/>, a full update: the shared ones, and the capacity is required, so that
+/// an update without it does not reset the capacity to the base capacity of the category.
+/// </summary>
 public sealed class RoomRequestValidator : RequestValidator<RoomRequest>
 {
     /// <summary>Creates the rules.</summary>
     public RoomRequestValidator()
     {
+        Include(new RoomFieldsValidator());
+        RuleFor(r => r.Capacity)
+            .NotNull().WithMessage("Вкажіть місткість номера.");
+    }
+}
+
+/// <summary>Rules of <see cref="NewRoomRequest"/>: the shared ones and the hotel; an omitted capacity takes the base one.</summary>
+public sealed class NewRoomRequestValidator : RequestValidator<NewRoomRequest>
+{
+    /// <summary>Creates the rules.</summary>
+    public NewRoomRequestValidator()
+    {
+        Include(new RoomFieldsValidator());
+        RuleFor(r => r.HotelId)
+            .NotEmpty().WithMessage("Вкажіть готель.");
+    }
+}
+
+/// <summary>
+/// Rules of the fields a new room and an update share; the lengths are those of rooms.Rooms. Internal, so
+/// that Program does not register it as the validator of <see cref="RoomRequest"/>.
+/// </summary>
+internal sealed class RoomFieldsValidator : RequestValidator<RoomRequest>
+{
+    /// <summary>Creates the rules.</summary>
+    public RoomFieldsValidator()
+    {
         RuleFor(r => r.Number)
             .NotEmpty().WithMessage("Вкажіть номер на дверях.")
             .MaximumLength(16).WithMessage("Номер має бути не довшим за 16 символів.");
+
+        // Nullable, because 0 is a floor: a missing floor would otherwise become 0 without an error.
+        RuleFor(r => r.Floor)
+            .NotNull().WithMessage("Вкажіть поверх.");
         RuleFor(r => r.RoomCategoryId)
             .NotEmpty().WithMessage("Вкажіть категорію номера.");
         RuleFor(r => r.Capacity)
@@ -150,18 +186,6 @@ public sealed class RoomRequestValidator : RequestValidator<RoomRequest>
             .MaximumLength(1000).WithMessage("Перелік зручностей має бути не довшим за 1000 символів.");
         RuleFor(r => r.Notes)
             .MaximumLength(2000).WithMessage("Примітки мають бути не довшими за 2000 символів.");
-    }
-}
-
-/// <summary>Rules of <see cref="NewRoomRequest"/>: those of <see cref="RoomRequest"/> and the hotel.</summary>
-public sealed class NewRoomRequestValidator : RequestValidator<NewRoomRequest>
-{
-    /// <summary>Creates the rules.</summary>
-    public NewRoomRequestValidator()
-    {
-        Include(new RoomRequestValidator());
-        RuleFor(r => r.HotelId)
-            .NotEmpty().WithMessage("Вкажіть готель.");
     }
 }
 

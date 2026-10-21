@@ -7,8 +7,9 @@ using Zatyshok.Infrastructure.Persistence;
 namespace Zatyshok.Infrastructure.Modules.Rooms;
 
 /// <summary>
-/// Editable fields of a room (FR-06). A null capacity takes the base capacity of the category; a given one
-/// is not smaller than it (<see cref="RoomService"/>). The hotel is not here: a room never moves to another hotel.
+/// Editable fields of a room (FR-06). A null capacity (only for a new room: the API requires it in an update)
+/// takes the base capacity of the category; a given one is not smaller than it (<see cref="RoomService"/>).
+/// The hotel is not here: a room never moves to another hotel.
 /// </summary>
 public record RoomData(string Number, int Floor, Guid RoomCategoryId, int? Capacity, string? Amenities, string? Notes);
 

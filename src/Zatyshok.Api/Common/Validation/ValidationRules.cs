@@ -21,4 +21,12 @@ public static class ValidationRules
             .WithMessage($"{what} має бути з точністю до копійки (не більше двох знаків після коми).")
             .LessThanOrEqualTo(MaxMoneyAmount)
             .WithMessage($"{what} не може перевищувати 9 999 999 999,99 грн.");
+
+    /// <summary>The same rule for an optional or required-but-nullable amount; a missing one is left to NotNull.</summary>
+    public static IRuleBuilderOptions<T, decimal?> MoneyAmount<T>(this IRuleBuilder<T, decimal?> rule, string what)
+        => rule
+            .Must(amount => amount is null || decimal.Round(amount.Value, 2) == amount)
+            .WithMessage($"{what} має бути з точністю до копійки (не більше двох знаків після коми).")
+            .LessThanOrEqualTo(MaxMoneyAmount)
+            .WithMessage($"{what} не може перевищувати 9 999 999 999,99 грн.");
 }

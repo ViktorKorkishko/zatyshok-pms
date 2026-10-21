@@ -6,8 +6,11 @@ using Zatyshok.Infrastructure.Modules.Rooms;
 
 namespace Zatyshok.Api.Modules.Rooms;
 
-/// <summary>Готель мережі для створення або повної зміни (FR-05).</summary>
-public sealed class HotelRequest
+/// <summary>
+/// Поля готелю для повної зміни (FR-05). Правила готелю обов'язкові: зміна, яка їх не містить, інакше
+/// скинула б їх до типових.
+/// </summary>
+public class HotelRequest
 {
     /// <summary>Назва готелю, до 200 символів.</summary>
     /// <example>Затишок Ужгород</example>
@@ -38,25 +41,31 @@ public sealed class HotelRequest
     public string? Email { get; init; }
 
     /// <summary>
-    /// За скільки діб до заїзду закінчується безкоштовне скасування (FR-15), від 0 до 365;
-    /// якщо не вказано — 1.
+    /// За скільки діб до заїзду закінчується безкоштовне скасування (FR-15), від 0 до 365. Обов'язкове
+    /// під час зміни готелю; для нового готелю, якщо не вказано, — 1.
     /// </summary>
     /// <example>1</example>
     public int? CancellationDeadlineDaysBefore { get; init; }
 
-    /// <summary>Година за часом готелю, о якій закінчується безкоштовне скасування; якщо не вказано — 18:00.</summary>
+    /// <summary>
+    /// Година за часом готелю, о якій закінчується безкоштовне скасування, у форматі ГГ:ХХ:СС. Обов'язкова
+    /// під час зміни готелю; для нового готелю, якщо не вказано, — 18:00:00.
+    /// </summary>
     /// <example>18:00:00</example>
     public TimeOnly? CancellationDeadlineTime { get; init; }
 
-    /// <summary>Час заїзду; якщо не вказано — 14:00.</summary>
+    /// <summary>Час заїзду, ГГ:ХХ:СС. Обов'язковий під час зміни готелю; для нового готелю, якщо не вказано, — 14:00:00.</summary>
     /// <example>14:00:00</example>
     public TimeOnly? CheckInTime { get; init; }
 
-    /// <summary>Час виїзду; якщо не вказано — 12:00.</summary>
+    /// <summary>Час виїзду, ГГ:ХХ:СС. Обов'язковий під час зміни готелю; для нового готелю, якщо не вказано, — 12:00:00.</summary>
     /// <example>12:00:00</example>
     public TimeOnly? CheckOutTime { get; init; }
 
-    /// <summary>The fields for the service; an omitted rule takes the default of 12.3.2 (FR-15).</summary>
+    /// <summary>
+    /// The fields for the service. An omitted rule of a new hotel takes the default of FR-15 (table 12.3);
+    /// an update has every rule, because its validator requires them.
+    /// </summary>
     internal HotelData ToData() => new(
         Name,
         City,
@@ -70,6 +79,9 @@ public sealed class HotelRequest
         CheckInTime ?? Hotel.DefaultCheckInTime,
         CheckOutTime ?? Hotel.DefaultCheckOutTime);
 }
+
+/// <summary>Новий готель мережі (FR-05). Не вказані правила готелю отримують типові значення.</summary>
+public sealed class NewHotelRequest : HotelRequest;
 
 /// <summary>Готель мережі.</summary>
 public sealed class HotelResponse
@@ -155,8 +167,43 @@ public sealed class HotelListQuery : PageQuery
     public bool? IsActive { get; init; }
 }
 
-/// <summary>Rules of <see cref="HotelRequest"/>; the lengths are those of the columns of rooms.Hotels.</summary>
+/// <summary>
+/// Rules of <see cref="HotelRequest"/>, a full update: the shared ones, and every rule of the hotel is
+/// required. Before, an update without them silently reset them to the defaults, e.g. when a client changed
+/// only the phone.
+/// </summary>
 public sealed class HotelRequestValidator : RequestValidator<HotelRequest>
+{
+    /// <summary>Creates the rules.</summary>
+    public HotelRequestValidator()
+    {
+        Include(new HotelFieldsValidator());
+        RuleFor(h => h.CancellationDeadlineDaysBefore)
+            .NotNull().WithMessage("Вкажіть, за скільки діб до заїзду закінчується безкоштовне скасування.");
+        RuleFor(h => h.CancellationDeadlineTime)
+            .NotNull().WithMessage("Вкажіть годину, о якій закінчується безкоштовне скасування.");
+        RuleFor(h => h.CheckInTime)
+            .NotNull().WithMessage("Вкажіть час заїзду.");
+        RuleFor(h => h.CheckOutTime)
+            .NotNull().WithMessage("Вкажіть час виїзду.");
+    }
+}
+
+/// <summary>Rules of <see cref="NewHotelRequest"/>: the shared ones; an omitted rule of the hotel takes its default.</summary>
+public sealed class NewHotelRequestValidator : RequestValidator<NewHotelRequest>
+{
+    /// <summary>Creates the rules.</summary>
+    public NewHotelRequestValidator()
+    {
+        Include(new HotelFieldsValidator());
+    }
+}
+
+/// <summary>
+/// Rules of the fields a new hotel and an update share; the lengths are those of the columns of rooms.Hotels.
+/// Internal, so that Program does not register it as the validator of <see cref="HotelRequest"/>.
+/// </summary>
+internal sealed class HotelFieldsValidator : RequestValidator<HotelRequest>
 {
     /// <summary>Largest number of days before check-in for the end of free cancellation.</summary>
     /// <remarks>
@@ -167,7 +214,7 @@ public sealed class HotelRequestValidator : RequestValidator<HotelRequest>
     public const int MaxCancellationDeadlineDays = 365;
 
     /// <summary>Creates the rules.</summary>
-    public HotelRequestValidator()
+    public HotelFieldsValidator()
     {
         RuleFor(h => h.Name)
             .NotEmpty().WithMessage("Вкажіть назву готелю.")

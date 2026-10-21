@@ -97,7 +97,7 @@ public class RoomsApiTests(ApiFixture api) : IClassFixture<ApiFixture>
         var response = await api.Client.PostJsonAsync(Url, new { number = "", capacity = 0, notes = new string('х', 2001) });
 
         var problem = await Problem.ReadAsync(response, HttpStatusCode.BadRequest);
-        Assert.Equal(["capacity", "hotelId", "notes", "number", "roomCategoryId"], problem.Errors!.Keys.Order(StringComparer.Ordinal));
+        Assert.Equal(["capacity", "floor", "hotelId", "notes", "number", "roomCategoryId"], problem.Errors!.Keys.Order(StringComparer.Ordinal));
         Assert.Equal("Вкажіть готель.", Assert.Single(problem.Errors["hotelId"]));
     }
 
@@ -177,10 +177,26 @@ public class RoomsApiTests(ApiFixture api) : IClassFixture<ApiFixture>
         var hotel = await CreateHotelAsync();
         var room = await ReserveAsync(hotel);
 
-        var response = await api.Client.PutJsonAsync($"{Url}/{room.Id}", new { number = room.Number, floor = 1, roomCategoryId = Seed.Superior });
+        var response = await api.Client.PutJsonAsync($"{Url}/{room.Id}", new { number = room.Number, floor = 1, roomCategoryId = Seed.Superior, capacity = 2 });
 
         var problem = await Problem.ReadAsync(response, HttpStatusCode.Conflict);
         Assert.StartsWith("Номер заброньований", problem.Detail);
+    }
+
+    [Fact]
+    public async Task UpdateWithoutCapacityGives400AndKeepsIt()
+    {
+        var hotel = await CreateHotelAsync();
+        var room = hotel.Rooms[0];
+        await (await api.Client.PutJsonAsync($"{Url}/{room.Id}", new { number = room.Number, floor = 1, roomCategoryId = hotel.Category.Id, capacity = 3 }))
+            .AssertStatusAsync(HttpStatusCode.OK);
+
+        // Before the fix an update without capacity reset it to the base capacity of the category (2).
+        var response = await api.Client.PutJsonAsync($"{Url}/{room.Id}", new { number = room.Number, floor = 1, roomCategoryId = hotel.Category.Id, notes = "Вид на парк" });
+
+        var problem = await Problem.ReadAsync(response, HttpStatusCode.BadRequest);
+        Assert.Equal("Вкажіть місткість номера.", Assert.Single(problem.Errors!["capacity"]));
+        Assert.Equal(3, (await GetAsync(room.Id)).Capacity);
     }
 
     [Fact]

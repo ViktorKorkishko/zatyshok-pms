@@ -49,6 +49,16 @@ public class ServicesApiTests(ApiFixture api) : IClassFixture<ApiFixture>
     }
 
     [Fact]
+    public async Task MissingPriceGivesValidationProblem()
+    {
+        // 0 is a valid price, so a missing price must not silently become a free service.
+        var response = await api.Client.PostJsonAsync(Url, new { name = UniqueName() });
+
+        var problem = await Problem.ReadAsync(response, HttpStatusCode.BadRequest);
+        Assert.Equal("Вкажіть ціну послуги.", Assert.Single(problem.Errors!["price"]));
+    }
+
+    [Fact]
     public async Task DuplicateNameGives409()
     {
         var response = await api.Client.PostJsonAsync(Url, new { name = "Сніданок", price = 1m });
