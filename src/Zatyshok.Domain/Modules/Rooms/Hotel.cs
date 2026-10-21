@@ -27,7 +27,7 @@ public class Hotel
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
     // Hotel rules are settings, not code (risk R-08). Defaults: 1 day and 18:00 come from
-    // FR-15; 14:00 and 12:00 are an assumption to agree with the hotel directors (12.3.2).
+    // FR-15; 14:00 and 12:00 are an assumption to agree with the hotel directors (table 12.1).
     // The API uses the same defaults when a new hotel comes without these rules.
     public const int DefaultCancellationDeadlineDaysBefore = 1;
     public static readonly TimeOnly DefaultCancellationDeadlineTime = new(18, 0);
@@ -54,7 +54,7 @@ public class Hotel
         => DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(utcNow, FindTimeZone()));
 
     /// <summary>
-    /// End of free cancellation for a booking (FR-15, 12.3.3): check-in date minus
+    /// End of free cancellation for a booking (FR-15, the note under table 12.4): check-in date minus
     /// <see cref="CancellationDeadlineDaysBefore"/> days at <see cref="CancellationDeadlineTime"/>
     /// hotel time, converted to UTC. For the defaults it is 18:00 of the day before check-in.
     /// </summary>

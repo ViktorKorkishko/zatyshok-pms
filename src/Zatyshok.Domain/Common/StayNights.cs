@@ -1,7 +1,7 @@
 namespace Zatyshok.Domain.Common;
 
 /// <summary>
-/// Nights of a stay. A night is named by the date it starts (12.3.2), so a stay from check-in to
+/// Nights of a stay. A night is named by the date it starts (the Night of BookingNights, 12.1.2), so a stay from check-in to
 /// check-out has the nights check-in … check-out − 1: the check-out day is not a night and is not paid.
 /// Shared by Rooms (night prices) and Bookings (availability per night).
 /// </summary>

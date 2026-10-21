@@ -5,7 +5,7 @@ namespace Zatyshok.Domain.Modules.Rooms;
 /// <summary>
 /// A physical room of a hotel. The number is unique within the hotel (FR-06).
 /// <see cref="Status"/> and <see cref="IsActive"/> change only through the methods below,
-/// which follow table 12.26; the related booking, task and fault records are changed by
+/// which follow table 12.8; the related booking, task and fault records are changed by
 /// the application services of T3/T6 in the same transaction.
 /// </summary>
 public class Room
@@ -26,7 +26,10 @@ public class Room
 
     public int Floor { get; set; }
 
-    /// <summary>Actual capacity of this room; may differ from the category default.</summary>
+    /// <summary>
+    /// Actual capacity of this room: at least the base capacity of its category (checked by RoomService,
+    /// because guests book the category), and larger for e.g. an extra bed.
+    /// </summary>
     public int Capacity { get; set; }
 
     /// <summary>Comma-separated amenity list; a dedicated dictionary is out of scope for the first version.</summary>
@@ -60,7 +63,7 @@ public class Room
 
     /// <summary>
     /// Free or Reserved → Occupied: check-in (UC-12). A Reserved room may be occupied only by the
-    /// booking it is pre-assigned to (table 12.25: "Free, or Reserved for this booking"). The room
+    /// booking it is pre-assigned to (table 12.7: "free or pre-assigned to this booking"). The room
     /// does not know its booking (the link is Bookings.RoomId in another module), so the caller passes
     /// <paramref name="reservedForThisBooking"/> = <c>booking.RoomId == room.Id</c>, read before
     /// <c>Booking.CheckIn</c>, because CheckIn sets RoomId.
@@ -85,8 +88,11 @@ public class Room
     }
 
     /// <summary>
-    /// Dirty → Free: the cleaning task is done (FR-29). A Dirty room never has an open fault
-    /// (OutOfOrder ⇔ open fault, table 12.18), so no extra check is needed here.
+    /// Dirty → Free: the cleaning task is done (FR-29). A Dirty room has no open fault
+    /// (OutOfOrder ⇔ open fault, table 12.12), so no extra check is needed here. This holds once faults
+    /// go through /maintenance-issues of T6, which closes the fault together with ReturnToService; the
+    /// T3 endpoints out-of-order and return-to-service change the state without a fault record and are
+    /// replaced in T6.
     /// </summary>
     public void MarkClean()
     {

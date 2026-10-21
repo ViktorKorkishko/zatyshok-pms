@@ -8,7 +8,7 @@ namespace Zatyshok.Domain.Common;
 public class DomainException(string message) : Exception(message)
 {
     /// <summary>
-    /// Message for a forbidden transition of tables 12.25–12.28, e.g.
+    /// Message for a forbidden transition of tables 12.7–12.9, e.g.
     /// "Бронювання: дію «скасувати» заборонено в стані «завершене»." The state is passed by its
     /// Ukrainian name from report 1 (figures 6.1–6.2, table 6.1), not the enum name, because the
     /// message is shown to the user (NFR-13).

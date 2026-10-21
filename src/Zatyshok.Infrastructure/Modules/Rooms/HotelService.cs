@@ -64,7 +64,7 @@ public class HotelService(ZatyshokDbContext db)
 
     /// <summary>
     /// Replaces the fields of the hotel. New cancellation rules apply to bookings made after the
-    /// change: a booking keeps the deadline computed when it was made (FR-15, 12.3.3).
+    /// change: a booking keeps the deadline computed when it was made (FR-15, the note under table 12.4).
     /// </summary>
     public async Task<Hotel> UpdateAsync(Guid id, HotelData data, CancellationToken cancellationToken)
     {
