@@ -1,4 +1,7 @@
 using System.Net;
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 
 namespace Zatyshok.Tests.Integration.Api;
 
@@ -45,6 +48,38 @@ public class ApiPipelineTests(ApiFixture api) : IClassFixture<ApiFixture>
         var firstId = Assert.Single(first.Headers.GetValues("X-Correlation-Id"));
         Assert.True(Guid.TryParse(firstId, out _));
         Assert.NotEqual(firstId, Assert.Single(second.Headers.GetValues("X-Correlation-Id")));
+    }
+
+    [Fact]
+    public async Task SwaggerDescribesEveryEndpointWithItsRolesAndMediaTypes()
+    {
+        var response = await api.Client.GetAsync("/swagger/v1/swagger.json");
+        await response.AssertStatusAsync(HttpStatusCode.OK);
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+
+        var operations = document.RootElement.GetProperty("paths").EnumerateObject()
+            .SelectMany(path => path.Value.EnumerateObject().Select(operation => (Name: $"{operation.Name.ToUpperInvariant()} {path.Name}", operation.Value)))
+            .ToList();
+
+        // Every action of every controller is in the document.
+        var actions = typeof(Program).Assembly.GetTypes()
+            .Where(t => typeof(ControllerBase).IsAssignableFrom(t))
+            .SelectMany(t => t.GetMethods())
+            .Count(m => m.GetCustomAttributes(typeof(HttpMethodAttribute), inherit: true).Length > 0);
+        Assert.Equal(actions, operations.Count);
+        Assert.Contains(operations, o => o.Name == "POST /api/v1/rooms/{id}/out-of-order");
+        foreach (var (name, operation) in operations)
+        {
+            Assert.False(string.IsNullOrWhiteSpace(operation.GetProperty("summary").GetString()), $"{name}: no summary");
+            Assert.Contains("**Ролі (перевірка з T4):**", operation.GetProperty("description").GetString());
+            foreach (var (code, content) in operation.GetProperty("responses").EnumerateObject()
+                         .Where(r => r.Value.TryGetProperty("content", out _))
+                         .Select(r => (r.Name, r.Value.GetProperty("content"))))
+            {
+                var expected = code.StartsWith('2') ? "application/json" : "application/problem+json";
+                Assert.Equal([expected], content.EnumerateObject().Select(c => c.Name));
+            }
+        }
     }
 
     [Theory]
