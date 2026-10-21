@@ -35,8 +35,8 @@ internal sealed class AvailabilityService(ZatyshokDbContext db, IRoomCatalog cat
             return hotels.Select(h => ToOffers(h, [])).ToList();
         }
 
-        // Three queries for the whole search, not one per hotel, category or night: the search over a
-        // whole city must answer within 3 s (NFR-01).
+        // Prices, rooms and bookings come in one query each for the whole search, not one per hotel,
+        // category or night: the search over a whole city must answer within 3 s (NFR-01).
         var hotelIds = hotels.Select(h => h.Id).ToList();
         var categoryIds = categories.Select(c => c.Id).ToList();
         var prices = (await catalog.GetNightPricesAsync(hotelIds, categoryIds, search.CheckIn, search.CheckOut, cancellationToken))
