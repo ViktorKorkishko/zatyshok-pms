@@ -18,6 +18,9 @@ internal sealed class RoomInventory(ZatyshokDbContext db) : IRoomInventory
         var rooms = await db.Rooms.AsNoTracking()
             .Where(r => hotels.Contains(r.HotelId) && categories.Contains(r.RoomCategoryId)
                         && r.IsActive && r.Status != RoomStatus.OutOfOrder)
+            // The common amenities keep the order of the first room, so the rooms come in a fixed order:
+            // without ORDER BY PostgreSQL returns them in any order, e.g. an updated row last.
+            .OrderBy(r => r.Number).ThenBy(r => r.Id)
             .Select(r => new { r.HotelId, r.RoomCategoryId, r.Amenities })
             .ToListAsync(cancellationToken);
 
@@ -30,8 +33,9 @@ internal sealed class RoomInventory(ZatyshokDbContext db) : IRoomInventory
     }
 
     /// <summary>
-    /// Amenities found in every list, in the order of the first list. A room keeps them as text separated
-    /// by commas (12.1.2), e.g. "Wi-Fi, кондиціонер, телевізор"; case and spaces do not matter.
+    /// Amenities found in every list, in the order of the first list (the room with the lowest number). A
+    /// room keeps them as text separated by commas (12.1.2), e.g. "Wi-Fi, кондиціонер, телевізор"; case and
+    /// spaces do not matter.
     /// </summary>
     private static IReadOnlyList<string> CommonAmenities(IEnumerable<string?> lists)
     {
