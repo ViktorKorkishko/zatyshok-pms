@@ -24,4 +24,10 @@ public class SeasonRate
 
     /// <summary>Price per night in UAH within the period.</summary>
     public decimal PricePerNight { get; set; }
+
+    /// <summary>
+    /// Whether this period shares at least one night with [<paramref name="startDate"/>,
+    /// <paramref name="endDate"/>]; both bounds are inclusive, so periods that touch on one night overlap.
+    /// </summary>
+    public bool Overlaps(DateOnly startDate, DateOnly endDate) => StartDate <= endDate && startDate <= EndDate;
 }
