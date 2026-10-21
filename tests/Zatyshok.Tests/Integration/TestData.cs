@@ -175,6 +175,30 @@ internal static class RowLocks
 
         Assert.Fail("The second transaction did not start waiting for the row lock.");
     }
+
+    /// <summary>
+    /// Waits until some session of the test database is blocked on a lock: for a request to the API
+    /// test host, whose connection the test does not know.
+    /// </summary>
+    public static async Task WaitUntilSomeSessionWaitsForLockAsync(PostgresDatabaseFixture database)
+    {
+        await using var monitor = await database.OpenConnectionAsync();
+        await using var command = new NpgsqlCommand(
+            "SELECT count(*) FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'", monitor);
+
+        var deadline = DateTime.UtcNow.AddSeconds(30);
+        while (DateTime.UtcNow < deadline)
+        {
+            if ((long)(await command.ExecuteScalarAsync())! > 0)
+            {
+                return;
+            }
+
+            await Task.Delay(20);
+        }
+
+        Assert.Fail("No session started waiting for a row lock.");
+    }
 }
 
 /// <summary>Checks for errors that PostgreSQL itself raises (constraint, trigger, privilege).</summary>

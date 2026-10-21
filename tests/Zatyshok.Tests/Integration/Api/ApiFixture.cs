@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Zatyshok.Domain.Common;
 using Zatyshok.Infrastructure;
 using Zatyshok.Infrastructure.Persistence;
 
@@ -45,6 +46,14 @@ public class ApiFixture : PostgresDatabaseFixture
             .WithWebHostBuilder(builder => builder.ConfigureTestServices(replaceServices))
             .CreateClient();
 
+    /// <summary>A client of a user of one hotel: the requests get that hotel scope (FR-02, 9.6).</summary>
+    public HttpClient CreateClientForHotel(Guid hotelId)
+        => CreateClient(services =>
+        {
+            services.RemoveAll<IHotelScope>();
+            services.AddScoped<IHotelScope>(_ => new OneHotelScope(hotelId));
+        });
+
     public override async Task DisposeAsync()
     {
         // The host first: its pooled connections would keep the database open.
@@ -54,6 +63,11 @@ public class ApiFixture : PostgresDatabaseFixture
         }
 
         await base.DisposeAsync();
+    }
+
+    private sealed class OneHotelScope(Guid hotelId) : IHotelScope
+    {
+        public Guid? HotelId => hotelId;
     }
 
     private sealed class ZatyshokApiFactory(string connectionString) : WebApplicationFactory<Program>

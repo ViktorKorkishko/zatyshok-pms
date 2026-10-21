@@ -2,12 +2,9 @@ using System.Data;
 using System.Net;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
-using Npgsql;
 using Zatyshok.Api.Common.Paging;
 using Zatyshok.Api.Modules.Rooms;
-using Zatyshok.Domain.Common;
 using Zatyshok.Domain.Modules.Rooms;
 
 namespace Zatyshok.Tests.Integration.Api;
@@ -261,7 +258,7 @@ public class RoomsApiTests(ApiFixture api) : IClassFixture<ApiFixture>
         await booking.Database.ExecuteSqlAsync($"""SELECT 1 FROM rooms."Rates" WHERE "Id" = {hotel.Rate.Id} FOR UPDATE""");
 
         var request = api.Client.PostAsync($"{Url}/{hotel.Rooms[0].Id}/out-of-order", null);
-        await WaitUntilASessionWaitsForALockAsync();
+        await RowLocks.WaitUntilSomeSessionWaitsForLockAsync(api);
 
         Assert.False(request.IsCompleted);
         await transaction.CommitAsync();
@@ -271,11 +268,7 @@ public class RoomsApiTests(ApiFixture api) : IClassFixture<ApiFixture>
     [Fact]
     public async Task UserOfOneHotelSeesOnlyItsRooms()
     {
-        var kyivOnly = api.CreateClient(services =>
-        {
-            services.RemoveAll<IHotelScope>();
-            services.AddScoped<IHotelScope>(_ => new OneHotelScope(Seed.Kyiv));
-        });
+        var kyivOnly = api.CreateClientForHotel(Seed.Kyiv);
         var lvivRoom = Seed.LvivRoom101;
 
         var all = await (await kyivOnly.GetAsync($"{Url}?pageSize=100")).ReadAsync<PagedResponse<RoomResponse>>();
@@ -339,30 +332,5 @@ public class RoomsApiTests(ApiFixture api) : IClassFixture<ApiFixture>
         db.Bookings.Add(booking);
         await db.SaveChangesAsync();
         return room;
-    }
-
-    private async Task WaitUntilASessionWaitsForALockAsync()
-    {
-        await using var monitor = await api.OpenConnectionAsync();
-        await using var command = new NpgsqlCommand(
-            "SELECT count(*) FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'", monitor);
-
-        var deadline = DateTime.UtcNow.AddSeconds(30);
-        while (DateTime.UtcNow < deadline)
-        {
-            if ((long)(await command.ExecuteScalarAsync())! > 0)
-            {
-                return;
-            }
-
-            await Task.Delay(20);
-        }
-
-        Assert.Fail("The request did not start waiting for the rate lock.");
-    }
-
-    private sealed class OneHotelScope(Guid hotelId) : IHotelScope
-    {
-        public Guid? HotelId => hotelId;
     }
 }
