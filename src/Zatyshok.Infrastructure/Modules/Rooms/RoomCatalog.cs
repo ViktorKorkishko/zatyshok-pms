@@ -16,17 +16,14 @@ internal sealed class RoomCatalog(ZatyshokDbContext db, TimeProvider time) : IRo
 
     public async Task<IReadOnlyList<HotelInfo>> FindActiveHotelsInCityAsync(string city, CancellationToken cancellationToken)
     {
-        // A guest types the city, so "одеса" must find "Одеса". The comparison is made here, not in SQL:
-        // lower() in PostgreSQL depends on the collation of the database (Collations.Ukrainian), while
-        // the network has at most 20 hotels (NFR-15), so reading all the active ones costs nothing.
-        var wanted = city.Trim();
+        // The city is compared by the rule of Cities, the same as in the hotel list (GET /hotels?city=).
         var hotels = await db.Hotels.AsNoTracking()
             .Where(h => h.IsActive)
             .OrderBy(h => h.Name).ThenBy(h => h.Id)
             .ToListAsync(cancellationToken);
 
         return hotels
-            .Where(h => string.Equals(h.City.Trim(), wanted, StringComparison.OrdinalIgnoreCase))
+            .Where(h => Cities.Same(h.City, city))
             .Select(ToInfo)
             .ToList();
     }

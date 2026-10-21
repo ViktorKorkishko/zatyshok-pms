@@ -28,20 +28,23 @@ public record HotelFilter(string? City, bool IsActive);
 /// </summary>
 public class HotelService(ZatyshokDbContext db)
 {
-    public Task<PagedList<Hotel>> ListAsync(HotelFilter filter, PageRequest page, CancellationToken cancellationToken)
+    public async Task<PagedList<Hotel>> ListAsync(HotelFilter filter, PageRequest page, CancellationToken cancellationToken)
     {
         var query = db.Hotels.AsNoTracking();
         if (filter.City is { } city)
         {
-            var trimmed = city.Trim();
-            query = query.Where(h => h.City == trimmed);
+            // The same rule as the availability search (Cities: case and spaces do not matter), applied in
+            // C# to the few hotels of the network; the page itself is still read by SQL.
+            var cities = await db.Hotels.AsNoTracking().Select(h => new { h.Id, h.City }).ToListAsync(cancellationToken);
+            var ids = cities.Where(h => Cities.Same(h.City, city)).Select(h => h.Id).ToList();
+            query = query.Where(h => ids.Contains(h.Id));
         }
 
         // Never both kinds together: by default the API asks for active hotels only (UC-08, FR-10).
         query = query.Where(h => h.IsActive == filter.IsActive);
 
         // Id as the last key keeps the order stable for hotels with the same name (see ToPagedListAsync).
-        return query.OrderBy(h => h.Name).ThenBy(h => h.Id).ToPagedListAsync(page, cancellationToken);
+        return await query.OrderBy(h => h.Name).ThenBy(h => h.Id).ToPagedListAsync(page, cancellationToken);
     }
 
     public async Task<Hotel> GetAsync(Guid id, CancellationToken cancellationToken)

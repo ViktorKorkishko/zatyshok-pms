@@ -159,7 +159,7 @@ public sealed class HotelResponse
 /// <summary>Фільтри списку готелів.</summary>
 public sealed class HotelListQuery : PageQuery
 {
-    /// <summary>Лише готелі цього міста (точний збіг назви).</summary>
+    /// <summary>Лише готелі цього міста, без урахування регістру і пробілів навколо (як у пошуку доступності).</summary>
     /// <example>Київ</example>
     public string? City { get; init; }
 

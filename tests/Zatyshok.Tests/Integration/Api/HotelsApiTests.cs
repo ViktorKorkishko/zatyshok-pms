@@ -42,6 +42,17 @@ public class HotelsApiTests(ApiFixture api) : IClassFixture<ApiFixture>
     }
 
     [Theory]
+    [InlineData("Одеса")]
+    [InlineData("одеса")]
+    [InlineData("%20ОДЕСА%20")]
+    public async Task CityFilterIgnoresCaseAndSpacesLikeTheAvailabilitySearch(string city)
+    {
+        var page = await (await api.Client.GetAsync($"{Url}?city={city}")).ReadAsync<PagedResponse<HotelResponse>>();
+
+        Assert.Equal(Seed.Odesa, Assert.Single(page.Items).Id);
+    }
+
+    [Theory]
     [InlineData("pageSize=101", "pageSize")]
     [InlineData("pageSize=0", "pageSize")]
     [InlineData("page=0", "page")]
