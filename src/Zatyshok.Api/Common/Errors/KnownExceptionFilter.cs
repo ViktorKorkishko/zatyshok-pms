@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using Zatyshok.Api.Common.Validation;
 using Zatyshok.Domain.Common;
+using Zatyshok.Infrastructure.Persistence;
 
 namespace Zatyshok.Api.Common.Errors;
 
@@ -55,9 +55,10 @@ public sealed class KnownExceptionFilter(ILogger<KnownExceptionFilter> logger) :
 
         // Safety net: services translate the constraints they expect into precise messages,
         // so these generic ones appear only for a constraint a service did not foresee.
-        DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } }
+        // PostgresErrors is the one place that knows the SQLSTATE codes, for the services and for this filter.
+        DbUpdateException update when update.IsUniqueViolation()
             => (StatusCodes.Status409Conflict, "Запис із такими даними вже існує."),
-        DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.ForeignKeyViolation } }
+        DbUpdateException update when update.IsForeignKeyViolation()
             => (StatusCodes.Status409Conflict, "Дію не виконано: запис пов'язаний з іншими даними."),
 
         _ => null,

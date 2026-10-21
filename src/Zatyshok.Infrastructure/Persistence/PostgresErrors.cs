@@ -12,8 +12,11 @@ public static class PostgresErrors
 {
     /// <summary>23505: a unique index rejected the row, e.g. a second room "101" in one hotel (FR-06).</summary>
     public static bool IsUniqueViolation(this DbUpdateException exception, string constraintName)
-        => exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } postgres
-           && postgres.ConstraintName == constraintName;
+        => exception.IsUniqueViolation() && ((PostgresException)exception.InnerException!).ConstraintName == constraintName;
+
+    /// <summary>23505 of any unique index: for the general 409 of the API, when a service did not expect it.</summary>
+    public static bool IsUniqueViolation(this DbUpdateException exception)
+        => exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 
     /// <summary>
     /// 23503 on DELETE: other rows still reference this one through ON DELETE RESTRICT, i.e. the
