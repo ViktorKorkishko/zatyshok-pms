@@ -13,7 +13,14 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         var connectionString = BuildConnectionString(configuration);
-        services.AddDbContext<ZatyshokDbContext>(options => options.UseNpgsql(connectionString));
+
+        // An invoice is always read with two collections, Items and Payments (AutoInclude in
+        // InvoiceConfiguration). EF then warns on every such query until the query splitting is set
+        // explicitly. SingleQuery is EF's default anyway: one round trip and one consistent snapshot,
+        // and an invoice has only tens of lines, so the joined result stays small.
+        services.AddDbContext<ZatyshokDbContext>(options => options.UseNpgsql(
+            connectionString,
+            npgsql => npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery)));
         return services;
     }
 

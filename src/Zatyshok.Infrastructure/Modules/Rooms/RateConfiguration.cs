@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Zatyshok.Domain.Modules.Rooms;
+using Zatyshok.Infrastructure.Persistence;
 
 namespace Zatyshok.Infrastructure.Modules.Rooms;
 
@@ -8,9 +9,13 @@ public class RateConfiguration : IEntityTypeConfiguration<Rate>
 {
     public void Configure(EntityTypeBuilder<Rate> builder)
     {
+        builder.ToTable("Rates", Schemas.Rooms, t =>
+            t.HasCheckConstraint("CK_Rates_BasePricePerNight", "\"BasePricePerNight\" > 0"));
+
         builder.Property(r => r.BasePricePerNight).HasPrecision(12, 2);
 
-        // FR-08: exactly one rate per (hotel, category) pair.
+        // FR-08: exactly one rate per (hotel, category) pair. The row is also what
+        // SELECT … FOR UPDATE locks to serialize bookings of the pair (12.8.2).
         builder.HasIndex(r => new { r.HotelId, r.RoomCategoryId }).IsUnique();
 
         builder.HasOne(r => r.Hotel)
