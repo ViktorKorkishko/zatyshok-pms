@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Logging.Abstractions;
 using Zatyshok.Domain.Modules.Identity;
+using Zatyshok.Domain.Modules.Identity.Contracts;
 using Zatyshok.Infrastructure.Persistence;
 
 namespace Zatyshok.Tests.Integration;

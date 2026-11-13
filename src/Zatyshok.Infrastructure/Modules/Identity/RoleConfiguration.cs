@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Zatyshok.Domain.Modules.Identity;
+using Zatyshok.Domain.Modules.Identity.Contracts;
 using Zatyshok.Infrastructure.Persistence;
 
 namespace Zatyshok.Infrastructure.Modules.Identity;

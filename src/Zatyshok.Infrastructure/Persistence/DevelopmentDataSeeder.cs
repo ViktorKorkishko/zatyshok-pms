@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Zatyshok.Domain.Modules.Guests;
 using Zatyshok.Domain.Modules.Identity;
+using Zatyshok.Domain.Modules.Identity.Contracts;
 using Zatyshok.Domain.Modules.Rooms;
 
 namespace Zatyshok.Infrastructure.Persistence;
@@ -27,15 +28,16 @@ public static class DevelopmentDataSeeder
     /// </summary>
     public const string UnusablePasswordHash = "!unusable: password hashing comes in T4";
 
-    private static readonly Guid StandardId = Guid.Parse("11111111-1111-1111-1111-111111111101");
-    private static readonly Guid SuperiorId = Guid.Parse("11111111-1111-1111-1111-111111111102");
-    private static readonly Guid SuiteId = Guid.Parse("11111111-1111-1111-1111-111111111103");
+    // Internal, like the id helpers below, so that the API tests can refer to the seeded rows.
+    internal static readonly Guid StandardId = Guid.Parse("11111111-1111-1111-1111-111111111101");
+    internal static readonly Guid SuperiorId = Guid.Parse("11111111-1111-1111-1111-111111111102");
+    internal static readonly Guid SuiteId = Guid.Parse("11111111-1111-1111-1111-111111111103");
 
-    private static readonly Guid KyivId = Guid.Parse("22222222-2222-2222-2222-222222222201");
-    private static readonly Guid LvivId = Guid.Parse("22222222-2222-2222-2222-222222222202");
-    private static readonly Guid OdesaId = Guid.Parse("22222222-2222-2222-2222-222222222203");
-    private static readonly Guid DniproId = Guid.Parse("22222222-2222-2222-2222-222222222204");
-    private static readonly Guid KarpatyId = Guid.Parse("22222222-2222-2222-2222-222222222205");
+    internal static readonly Guid KyivId = Guid.Parse("22222222-2222-2222-2222-222222222201");
+    internal static readonly Guid LvivId = Guid.Parse("22222222-2222-2222-2222-222222222202");
+    internal static readonly Guid OdesaId = Guid.Parse("22222222-2222-2222-2222-222222222203");
+    internal static readonly Guid DniproId = Guid.Parse("22222222-2222-2222-2222-222222222204");
+    internal static readonly Guid KarpatyId = Guid.Parse("22222222-2222-2222-2222-222222222205");
 
     private static readonly Guid CorporateClientId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa01");
 
