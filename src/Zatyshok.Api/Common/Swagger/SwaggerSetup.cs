@@ -21,7 +21,7 @@ public static class SwaggerSetup
                 Version = "v1",
                 Description = "REST API системи мережі готелів «Затишок». Помилки повертаються у форматі "
                     + "ProblemDetails українською: 400 — некоректний запит, 404 — запис не знайдено, "
-                    + "409 — конфлікт зі станом даних. Вхід і перевірка ролей з'являться в T4; ролі, "
+                    + "409 — конфлікт зі станом даних. Вхід і перевірка ролей з'являться пізніше; ролі, "
                     + "указані в описі ендпоінта, поки не перевіряються.",
             });
 
@@ -161,7 +161,7 @@ public sealed class AllowedRolesOperationFilter : IOperationFilter
         }
 
         var names = string.Join(", ", attribute.Codes.Select(code => Roles.Names.GetValueOrDefault(code, code)));
-        var line = $"**Ролі (перевірка з T4):** {names}.";
+        var line = $"**Ролі (поки не перевіряються):** {names}.";
         operation.Description = string.IsNullOrEmpty(operation.Description) ? line : $"{operation.Description}\n\n{line}";
     }
 }

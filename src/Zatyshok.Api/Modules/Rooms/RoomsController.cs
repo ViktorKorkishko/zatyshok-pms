@@ -11,7 +11,7 @@ namespace Zatyshok.Api.Modules.Rooms;
 /// </summary>
 /// <remarks>
 /// The hotel scope is applied by <see cref="RoomService"/>, which takes the IHotelScope of the request
-/// (9.6). Until T4 it is the whole network (WholeNetworkScope); T4 registers the scope of the signed-in
+/// (9.6). For now it is the whole network (WholeNetworkScope); sign-in will register the scope of the signed-in
 /// user, and this controller does not change.
 /// </remarks>
 [ApiController]
@@ -82,7 +82,7 @@ public class RoomsController(RoomService rooms) : ControllerBase
     ///
     /// **Увага:** позначення номера (`number`) не змінюють, якщо в номері вже було проживання (UC-08): історія
     /// бронювань і рахунків показуватиме інший номер на дверях. Поки що API цього не перевіряє — модуль номерів
-    /// не бачить бронювань (п. 9.4.1); перевірку додасть оркестратор рецепції в T6.
+    /// не бачить бронювань (п. 9.4.1); перевірку згодом додасть оркестратор рецепції.
     /// </remarks>
     /// <param name="id" example="33333333-3333-3333-3333-333333330000">Ідентифікатор номера.</param>
     /// <param name="request">Нові значення полів.</param>
@@ -106,7 +106,7 @@ public class RoomsController(RoomService rooms) : ControllerBase
     /// виключається з доступності (FR-07, FR-30). Несправність у зайнятому номері записують у примітки,
     /// а з заброньованого номера спершу знімають призначення (UC-16 А1).
     ///
-    /// **Тимчасово, до T6:** стан змінюється без запису несправності (опис, автор, час). У T6 цю операцію
+    /// **Тимчасово:** стан змінюється без запису несправності (опис, автор, час). Згодом цю операцію
     /// замінить реєстрація несправності (`/maintenance-issues`): там опис несправності зайнятого номера
     /// дописується в його примітки (UC-16 А1), а менеджер бачить дефіцит номерів після виведення (UC-16 А2).
     /// </remarks>
@@ -127,7 +127,7 @@ public class RoomsController(RoomService rooms) : ControllerBase
     /// <remarks>
     /// Номер «на ремонті» переходить у стан «потребує прибирання» (FR-07).
     ///
-    /// **Тимчасово, до T6:** у T6 цю операцію замінить закриття несправності (`/maintenance-issues`), яке
+    /// **Тимчасово:** згодом цю операцію замінить закриття несправності (`/maintenance-issues`), яке
     /// також створює завдання на генеральне прибирання (UC-16).
     /// </remarks>
     /// <param name="id" example="33333333-3333-3333-3333-333333330000">Ідентифікатор номера.</param>

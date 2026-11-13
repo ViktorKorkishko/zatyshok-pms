@@ -5,7 +5,7 @@ namespace Zatyshok.Domain.Modules.Identity;
 /// <summary>
 /// User account of a guest or a staff member (table 12.3). Accounts are created by
 /// <see cref="CreateStaff"/> or <see cref="RegisterGuest"/>; the state and the login counters
-/// change only through the methods below (table 12.28). Password hashing comes in T4.
+/// change only through the methods below (table 12.28). Password hashing comes later, with sign-in.
 /// </summary>
 public class User
 {
@@ -132,7 +132,7 @@ public class User
         LastLoginAtUtc = nowUtc;
     }
 
-    /// <summary>Active → Blocked by the administrator (FR-03). Revoking refresh tokens is done by the T4 service.</summary>
+    /// <summary>Active → Blocked by the administrator (FR-03). Revoking refresh tokens will be done by the account service.</summary>
     public void Block()
     {
         EnsureStatus("заблокувати", UserStatus.Active);

@@ -4,9 +4,9 @@ namespace Zatyshok.Api.Common.Authorization;
 
 /// <summary>
 /// Roles that will have access to an endpoint by the column "Ролі" of table 6.2 (FR-02).
-/// <b>Not enforced yet:</b> sign-in and authorization policies come in T4, which replaces these marks
+/// <b>Not enforced yet:</b> sign-in and authorization policies come later and will replace these marks
 /// with checks. Until then the marks document the plan: Swagger shows them in the description of each
-/// endpoint, and an architecture test requires one on every endpoint, so none is forgotten in T4.
+/// endpoint, and an architecture test requires one on every endpoint, so none is forgotten when checks are added.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false)]
 public sealed class AllowedRolesAttribute(params string[] roles) : Attribute

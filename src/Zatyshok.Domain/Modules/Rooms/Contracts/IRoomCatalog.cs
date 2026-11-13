@@ -21,8 +21,8 @@ public sealed record StayPrices(Guid HotelId, Guid RoomCategoryId, IReadOnlyList
 
 /// <summary>
 /// Public contract of the module «Номерний фонд і тарифи» (table 9.6): hotels, categories and night prices
-/// for other modules (9.4.1, rule 1). T3 has the part that the availability search needs; the services of
-/// the catalog come here with the invoice lines in T6.
+/// for other modules (9.4.1, rule 1). So far it has the part that the availability search needs; the services of
+/// the catalog come here later, with the invoice lines.
 /// </summary>
 public interface IRoomCatalog
 {

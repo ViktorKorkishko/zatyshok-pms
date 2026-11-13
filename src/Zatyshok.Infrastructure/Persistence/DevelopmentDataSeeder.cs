@@ -17,16 +17,16 @@ namespace Zatyshok.Infrastructure.Persistence;
 /// </list>
 /// The roles themselves are not seeded here: they come with the migration (HasData in RoleConfiguration).
 /// Idempotent: each part does nothing when its first table already has rows (Hotels, Services,
-/// Users), so a database seeded in T1 gets only the new parts. Every id is deterministic so that
+/// Users), so a database seeded at the InitialRooms version gets only the new parts. Every id is deterministic so that
 /// manual Swagger checks and integration tests can reference the same data across database resets.
 /// </summary>
 public static class DevelopmentDataSeeder
 {
     /// <summary>
-    /// Placeholder for Users.PasswordHash until password hashing comes in T4. It is not a valid
+    /// Placeholder for Users.PasswordHash until password hashing is added. It is not a valid
     /// hash of any password, so no seeded account can sign in yet.
     /// </summary>
-    public const string UnusablePasswordHash = "!unusable: password hashing comes in T4";
+    public const string UnusablePasswordHash = "!unusable: password hashing is not implemented yet";
 
     // Internal, like the id helpers below, so that the API tests can refer to the seeded rows.
     internal static readonly Guid StandardId = Guid.Parse("11111111-1111-1111-1111-111111111101");
@@ -65,7 +65,7 @@ public static class DevelopmentDataSeeder
         await SeedPeopleAsync(db, logger, cancellationToken);
     }
 
-    /// <summary>Hotels, categories, rooms, rates and seasonal periods (the T1 seed).</summary>
+    /// <summary>Hotels, categories, rooms, rates and seasonal periods (the seed of the InitialRooms version).</summary>
     private static async Task SeedRoomsAsync(ZatyshokDbContext db, ILogger logger, CancellationToken cancellationToken)
     {
         if (await db.Hotels.AnyAsync(cancellationToken))

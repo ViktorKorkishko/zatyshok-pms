@@ -17,7 +17,7 @@ namespace Zatyshok.Tests.Architecture;
 /// a later stage cannot quietly break them:
 /// <list type="bullet">
 /// <item>a controller lives in Api/Modules/&lt;module&gt; and its route starts with api/v1/ (NFR-21);</item>
-/// <item>every endpoint has the planned roles of table 6.2 (<see cref="AllowedRolesAttribute"/>), which T4 turns into checks;</item>
+/// <item>every endpoint has the planned roles of table 6.2 (<see cref="AllowedRolesAttribute"/>), which later become checks;</item>
 /// <item>controllers work through the services of their module: no DbContext, no EF Core;</item>
 /// <item>endpoints take and return DTOs, never entities of the domain model.</item>
 /// </list>

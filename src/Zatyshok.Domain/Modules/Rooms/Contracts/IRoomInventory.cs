@@ -10,9 +10,9 @@ public sealed record SellableRooms(Guid HotelId, Guid RoomCategoryId, int Count,
 
 /// <summary>
 /// Public contract of the module «Номерний фонд і тарифи» (table 9.6): the room inventory for other
-/// modules, which may not read the rooms.* tables themselves (9.4.1, rule 1). T3 has the part that the
-/// availability search needs. The rate lock of 12.8.2 comes here with booking creation in T5, the room
-/// state changes of check-in (reserve, occupy, release) in T6.
+/// modules, which may not read the rooms.* tables themselves (9.4.1, rule 1). So far it has the part that the
+/// availability search needs. The rate lock of 12.8.2 comes here with booking creation, the room
+/// state changes of check-in (reserve, occupy, release) with the front desk.
 /// </summary>
 public interface IRoomInventory
 {

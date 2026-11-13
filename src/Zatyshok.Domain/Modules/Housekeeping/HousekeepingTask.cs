@@ -5,7 +5,7 @@ namespace Zatyshok.Domain.Modules.Housekeeping;
 /// <summary>
 /// Cleaning task for a room (FR-27–FR-29, table 12.17). The hotel is known through the room
 /// (3NF), so the task keeps only RoomId. States follow table 12.27. Room, booking and users
-/// belong to other modules and are referenced by id only; the T6 services check that the
+/// belong to other modules and are referenced by id only; the housekeeping services check that the
 /// assignee is a housekeeper of the same hotel and move the room Dirty → Free after completion.
 /// </summary>
 public class HousekeepingTask

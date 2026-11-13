@@ -12,7 +12,7 @@ namespace Zatyshok.Infrastructure.Modules.Bookings;
 /// and prices come from the contracts of «Номерний фонд і тарифи» (table 9.6), the bookings are this
 /// module's own tables, and the formula itself is <see cref="AvailabilityCalculator"/> (12.8.2).
 /// <para>
-/// The search takes no lock: it shows the state at the moment of the request. Creating a booking (T5)
+/// The search takes no lock: it shows the state at the moment of the request. Creating a booking (to be added later)
 /// counts again under the rate lock, in one transaction with the insert (listing 12.1). The search is not
 /// limited by the hotel scope: availability and prices are what the portal shows to anyone (FR-10).
 /// </para>

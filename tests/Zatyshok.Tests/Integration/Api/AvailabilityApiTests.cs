@@ -10,7 +10,7 @@ namespace Zatyshok.Tests.Integration.Api;
 
 /// <summary>
 /// GET /api/v1/availability (FR-08 – FR-10): the seed hotels with their seasons, bookings that overlap the
-/// period in part (created through the domain model: the bookings service comes in T5), rooms out of order,
+/// period in part (created through the domain model: the bookings service comes later), rooms out of order,
 /// validation and errors. Tests that change data use their own hotel, so the seed stays as it is.
 /// </summary>
 [Trait("Category", "Integration")]

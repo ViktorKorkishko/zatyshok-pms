@@ -72,7 +72,7 @@ public class ApiPipelineTests(ApiFixture api) : IClassFixture<ApiFixture>
         foreach (var (name, operation) in operations)
         {
             Assert.False(string.IsNullOrWhiteSpace(operation.GetProperty("summary").GetString()), $"{name}: no summary");
-            Assert.Contains("**Ролі (перевірка з T4):**", operation.GetProperty("description").GetString());
+            Assert.Contains("**Ролі (поки не перевіряються):**", operation.GetProperty("description").GetString());
 
             // "Try it out" starts with the id of a seeded record, except for DELETE, which would remove it.
             if (operation.TryGetProperty("parameters", out var parameters)
