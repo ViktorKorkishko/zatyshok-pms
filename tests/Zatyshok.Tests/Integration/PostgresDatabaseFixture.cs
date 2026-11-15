@@ -33,7 +33,7 @@ public class PostgresDatabaseFixture : IAsyncLifetime
         return connection;
     }
 
-    public async Task InitializeAsync()
+    public virtual async Task InitializeAsync()
     {
         await TestPostgresServer.ExecuteAsync($"CREATE DATABASE \"{DatabaseName}\"");
         ConnectionString = await TestPostgresServer.GetConnectionStringAsync(DatabaseName);
@@ -45,7 +45,7 @@ public class PostgresDatabaseFixture : IAsyncLifetime
         }
     }
 
-    public async Task DisposeAsync()
+    public virtual async Task DisposeAsync()
     {
         // The database was not created (e.g. no server): nothing to clean up.
         if (ConnectionString.Length == 0)

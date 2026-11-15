@@ -2,7 +2,7 @@ namespace Zatyshok.Domain.Modules.Identity;
 
 /// <summary>
 /// One of the nine roles of section 4 of report 1 (table 12.2). The rows are seeded in every
-/// environment with fixed ids; authorization policies refer to <see cref="Code"/> (<see cref="RoleCodes"/>).
+/// environment with fixed ids; authorization policies refer to <see cref="Code"/> (<see cref="Contracts.RoleCodes"/>).
 /// </summary>
 public class Role
 {

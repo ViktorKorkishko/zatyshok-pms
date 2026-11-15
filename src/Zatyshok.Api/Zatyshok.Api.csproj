@@ -5,15 +5,25 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>ac6ebd82-b72b-42f1-807a-cb28951cd1f3</UserSecretsId>
+
+    <!-- XML comments of controllers and DTOs are the Swagger documentation.
+         A public member without a comment gives warning CS1591, so a missing description shows up in the build. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.11" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Unit tests call the internal mapping of the DTOs (ToData) without an HTTP request. -->
+    <InternalsVisibleTo Include="Zatyshok.Tests" />
   </ItemGroup>
 
   <ItemGroup>

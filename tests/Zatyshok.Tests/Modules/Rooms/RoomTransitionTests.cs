@@ -134,6 +134,35 @@ public class RoomTransitionTests
         Assert.True(room.IsActive);
     }
 
+    [Theory]
+    [InlineData(RoomStatus.Free)]
+    [InlineData(RoomStatus.Dirty)]
+    [InlineData(RoomStatus.OutOfOrder)]
+    public void CategoryChangesWhileNoBookingHoldsTheRoom(RoomStatus status)
+    {
+        var room = RoomIn(status);
+        var category = Guid.NewGuid();
+
+        room.ChangeCategory(category);
+
+        Assert.Equal(category, room.RoomCategoryId);
+        Assert.Equal(status, room.Status);
+    }
+
+    [Theory]
+    [InlineData(RoomStatus.Reserved)]
+    [InlineData(RoomStatus.Occupied)]
+    public void CategoryOfReservedOrOccupiedRoomDoesNotChange(RoomStatus status)
+    {
+        var room = RoomIn(status);
+        var category = room.RoomCategoryId;
+
+        Assert.Throws<DomainException>(() => room.ChangeCategory(Guid.NewGuid()));
+        room.ChangeCategory(category); // the same category is not a change
+
+        Assert.Equal(category, room.RoomCategoryId);
+    }
+
     private static Room NewRoom() => new() { Number = "101", Floor = 1, Capacity = 2, RoomCategoryId = Guid.NewGuid() };
 
     // Brings a new room to the given state through allowed transitions only.

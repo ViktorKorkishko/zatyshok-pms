@@ -69,4 +69,14 @@ public class HotelTests
 
         Assert.Equal(new DateTime(2027, 3, 28, 1, 30, 0, DateTimeKind.Utc), deadline);
     }
+
+    [Theory]
+    [InlineData("Europe/Kyiv", true)]
+    [InlineData("UTC", true)]
+    [InlineData("Europe/Atlantis", false)]
+    [InlineData("", false)]
+    public void IsKnownTimeZoneAcceptsOnlyZonesTheServerKnows(string timeZoneId, bool known)
+    {
+        Assert.Equal(known, Hotel.IsKnownTimeZone(timeZoneId));
+    }
 }
