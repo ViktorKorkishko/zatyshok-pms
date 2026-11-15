@@ -24,7 +24,7 @@ public class DevelopmentSeedTests(PostgresDatabaseFixture database) : IClassFixt
 
         var first = await SeedCounts.ReadAsync(database);
         Assert.Equal(new SeedCounts(5, 3, 25, 15, 2, 3, 9, 9, 3, 1), first);
-        await AssertEveryRoleHasOneUserWhoCannotSignInBeforeT4Async();
+        await AssertEveryRoleHasOneUserWhoCannotSignInYetAsync();
 
         // The API seeds on every Development start; a second run adds nothing.
         await using (var db = database.CreateDbContext())
@@ -35,7 +35,7 @@ public class DevelopmentSeedTests(PostgresDatabaseFixture database) : IClassFixt
         Assert.Equal(first, await SeedCounts.ReadAsync(database));
     }
 
-    private async Task AssertEveryRoleHasOneUserWhoCannotSignInBeforeT4Async()
+    private async Task AssertEveryRoleHasOneUserWhoCannotSignInYetAsync()
     {
         await using var db = database.CreateDbContext();
         var users = await db.Users.Include(u => u.Role).ToListAsync();
@@ -60,17 +60,17 @@ public class DevelopmentSeedTests(PostgresDatabaseFixture database) : IClassFixt
 }
 
 /// <summary>
-/// The Development seed on a database seeded in T1 and then migrated: the hotels part is
+/// The Development seed on a database seeded in the first version (InitialRooms) and then migrated: the hotels part is
 /// skipped, services and people are added (README, «Демо-дані»).
 /// </summary>
 [Trait("Category", "Integration")]
-public class DevelopmentSeedOnT1DatabaseTests(EmptyPostgresDatabaseFixture database) : IClassFixture<EmptyPostgresDatabaseFixture>
+public class DevelopmentSeedOnInitialRoomsDatabaseTests(EmptyPostgresDatabaseFixture database) : IClassFixture<EmptyPostgresDatabaseFixture>
 {
-    // «Затишок Київ» had this id already in the T1 seed; the seeded staff are bound to it.
+    // «Затишок Київ» had this id already in the first version's seed (InitialRooms); the seeded staff are bound to it.
     private static readonly Guid KyivId = Guid.Parse("22222222-2222-2222-2222-222222222201");
 
     [Fact]
-    public async Task SeedAddsServicesAndPeopleButKeepsTheT1Hotels()
+    public async Task SeedAddsServicesAndPeopleButKeepsTheInitialRoomsHotels()
     {
         await using (var db = database.CreateDbContext())
         {
@@ -78,7 +78,7 @@ public class DevelopmentSeedOnT1DatabaseTests(EmptyPostgresDatabaseFixture datab
             await migrator.MigrateAsync("InitialRooms");
             await using (var connection = await database.OpenConnectionAsync())
             {
-                await T1Data.InsertAsync(connection, KyivId);
+                await InitialRoomsData.InsertAsync(connection, KyivId);
             }
 
             await migrator.MigrateAsync();
@@ -89,7 +89,7 @@ public class DevelopmentSeedOnT1DatabaseTests(EmptyPostgresDatabaseFixture datab
             await DevelopmentDataSeeder.SeedAsync(db, NullLogger.Instance);
         }
 
-        // The single T1 hotel with its room and rates stays as it was.
+        // The single InitialRooms hotel with its room and rates stays as it was.
         Assert.Equal(new SeedCounts(1, 1, 1, 1, 1, 3, 9, 9, 3, 1), await SeedCounts.ReadAsync(database));
 
         await using var check = database.CreateDbContext();

@@ -3,7 +3,7 @@ namespace Zatyshok.Domain.Modules.Rooms;
 /// <summary>
 /// Seasonal price period of a <see cref="Rate"/> (FR-08). Takes priority over the base
 /// price for nights within [StartDate, EndDate]. Periods of one rate must not overlap;
-/// this is enforced by the rates service (T3), not by the database.
+/// this is enforced by the rates service, not by the database.
 /// </summary>
 public class SeasonRate
 {

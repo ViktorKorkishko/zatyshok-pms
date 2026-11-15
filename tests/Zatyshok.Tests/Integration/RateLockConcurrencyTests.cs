@@ -8,7 +8,7 @@ namespace Zatyshok.Tests.Integration;
 
 /// <summary>
 /// Two transactions book the last free room of a category at the same time (12.8.2, risk R-01).
-/// The test plays the steps of listing 12.1 with a minimal query instead of the T5 services:
+/// The test plays the steps of listing 12.1 with a minimal query instead of the booking services:
 /// lock the rate row with SELECT … FOR UPDATE, count free rooms per night, insert the booking.
 /// The order of the steps is fixed by the test, so the result does not depend on timing.
 /// </summary>

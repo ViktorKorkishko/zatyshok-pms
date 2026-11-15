@@ -10,7 +10,7 @@ namespace Zatyshok.Tests.Integration;
 /// Two payments to the same invoice at the same time (table 12.28, listing 12.2). A payment that
 /// keeps the invoice status inserts a Payments row but does not update the invoice row, so the
 /// xmin token is not checked and cannot catch the conflict. The payments are serialized by locking
-/// the invoice row, as the T6 invoice service will do; the test plays its steps.
+/// the invoice row, as the invoice service will do; the test plays its steps.
 /// </summary>
 [Trait("Category", "Integration")]
 public class InvoiceLockConcurrencyTests(PostgresDatabaseFixture database) : IClassFixture<PostgresDatabaseFixture>

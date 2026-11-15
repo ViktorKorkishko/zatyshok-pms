@@ -7,32 +7,32 @@ namespace Zatyshok.Tests.Integration;
 
 /// <summary>
 /// The migration chain InitialRooms → FullDomainModel → ReportingViewsAndAuditGuard on a database
-/// with T1 data, and the rollback to InitialRooms (П.6, items 1 and 2). Regression test for the
-/// generated Down methods that left the T1 tables in "rooms" and the schemas in place
+/// with InitialRooms data, and the rollback to InitialRooms (П.6, items 1 and 2). Regression test for the
+/// generated Down methods that left the InitialRooms tables in "rooms" and the schemas in place
 /// (both fixed by hand in the migration).
 /// </summary>
 [Trait("Category", "Integration")]
 public class MigrationTests(EmptyPostgresDatabaseFixture database) : IClassFixture<EmptyPostgresDatabaseFixture>
 {
-    private static readonly string[] T1Tables = ["Hotels", "Rates", "RoomCategories", "Rooms", "SeasonRates"];
+    private static readonly string[] InitialRoomsTables = ["Hotels", "Rates", "RoomCategories", "Rooms", "SeasonRates"];
 
     private static readonly string[] CreatedSchemas =
         ["audit", "billing", "bookings", "guests", "housekeeping", "identity", "notifications", "reporting", "rooms"];
 
     [Fact]
-    public async Task T1DataSurvivesUpgradeAndRollbackToInitialRooms()
+    public async Task InitialRoomsDataSurvivesUpgradeAndRollback()
     {
         await using var db = database.CreateDbContext();
         var migrator = db.GetService<IMigrator>();
         await using var connection = await database.OpenConnectionAsync();
 
-        // A T1 database with data.
+        // An InitialRooms database with data.
         await migrator.MigrateAsync("InitialRooms");
         var hotelId = Guid.NewGuid();
-        await T1Data.InsertAsync(connection, hotelId);
-        var t1Snapshot = await SnapshotAsync(connection, "public");
+        await InitialRoomsData.InsertAsync(connection, hotelId);
+        var initialRoomsSnapshot = await SnapshotAsync(connection, "public");
 
-        // Upgrade: the T1 tables move to "rooms" with their rows, the new Hotels columns get
+        // Upgrade: the InitialRooms tables move to "rooms" with their rows, the new Hotels columns get
         // their defaults and the existing rows pass the new CHECK constraints.
         await migrator.MigrateAsync();
         Assert.Equal(CreatedSchemas, await GetSchemasAsync(connection));
@@ -46,12 +46,12 @@ public class MigrationTests(EmptyPostgresDatabaseFixture database) : IClassFixtu
             Assert.Equal("101", Assert.Single(hotel.Rooms).Number);
         }
 
-        // Rollback: the T1 tables are back in "public" with the same rows, no other schema is left.
+        // Rollback: the InitialRooms tables are back in "public" with the same rows, no other schema is left.
         await migrator.MigrateAsync("InitialRooms");
         Assert.Empty(await GetSchemasAsync(connection));
-        Assert.Equal(T1Tables.Append("__EFMigrationsHistory").Order(StringComparer.Ordinal),
+        Assert.Equal(InitialRoomsTables.Append("__EFMigrationsHistory").Order(StringComparer.Ordinal),
             await QueryListAsync(connection, "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"));
-        Assert.Equal(t1Snapshot, await SnapshotAsync(connection, "public"));
+        Assert.Equal(initialRoomsSnapshot, await SnapshotAsync(connection, "public"));
 
         // And the chain can be applied again.
         await migrator.MigrateAsync();
@@ -75,11 +75,11 @@ public class MigrationTests(EmptyPostgresDatabaseFixture database) : IClassFixtu
             await QueryListAsync(connection, """SELECT tgname FROM pg_trigger WHERE tgrelid = 'audit."AuditLogs"'::regclass AND NOT tgisinternal"""));
     }
 
-    /// <summary>All rows of the five T1 tables of a schema as JSON text, table by table.</summary>
+    /// <summary>All rows of the five InitialRooms tables of a schema as JSON text, table by table.</summary>
     private static async Task<Dictionary<string, string>> SnapshotAsync(NpgsqlConnection connection, string schema)
     {
         var snapshot = new Dictionary<string, string>();
-        foreach (var table in T1Tables)
+        foreach (var table in InitialRoomsTables)
         {
             await using var command = new NpgsqlCommand(
                 $"""SELECT string_agg(row_to_json(t)::text, ',' ORDER BY t."Id") FROM {schema}."{table}" AS t""",

@@ -6,7 +6,7 @@ namespace Zatyshok.Domain.Modules.Rooms;
 /// A physical room of a hotel. The number is unique within the hotel (FR-06).
 /// <see cref="Status"/> and <see cref="IsActive"/> change only through the methods below,
 /// which follow table 12.8; the related booking, task and fault records are changed by
-/// the application services of T3/T6 in the same transaction.
+/// the application services of the catalog, front desk and housekeeping in the same transaction.
 /// </summary>
 public class Room
 {
@@ -90,9 +90,9 @@ public class Room
     /// <summary>
     /// Dirty → Free: the cleaning task is done (FR-29). A Dirty room has no open fault
     /// (OutOfOrder ⇔ open fault, table 12.12), so no extra check is needed here. This holds once faults
-    /// go through /maintenance-issues of T6, which closes the fault together with ReturnToService; the
-    /// T3 endpoints out-of-order and return-to-service change the state without a fault record and are
-    /// replaced in T6.
+    /// go through /maintenance-issues, which closes the fault together with ReturnToService; the
+    /// endpoints out-of-order and return-to-service change the state without a fault record and are
+    /// replaced then.
     /// </summary>
     public void MarkClean()
     {

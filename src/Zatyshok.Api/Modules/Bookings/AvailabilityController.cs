@@ -9,9 +9,9 @@ namespace Zatyshok.Api.Modules.Bookings;
 /// бронювання за телефоном чи на рецепції (UC-05).
 /// </summary>
 // Roles: table 6.2 gives FR-10 to the guest and both operators, and UC-04 starts after the guest signed in
-// (UC-02). T3 makes the search a public endpoint of the portal instead, so it stays open to
-// anyone in T4. This is a deviation from the precondition of UC-04 to agree with the customer.
-// It has no hotel scope: availability and prices are public; the scope applies when a booking is created (T5).
+// (UC-02). This controller makes the search a public endpoint of the portal instead, so it stays open to
+// anyone after sign-in is added. This is a deviation from the precondition of UC-04 to agree with the customer.
+// It has no hotel scope: availability and prices are public; the scope will apply when a booking is created.
 [ApiController]
 [Route("api/v1/availability")]
 public class AvailabilityController(IAvailabilityService availability) : ControllerBase

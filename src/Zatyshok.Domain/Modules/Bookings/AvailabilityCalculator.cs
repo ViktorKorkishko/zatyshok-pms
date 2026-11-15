@@ -23,7 +23,7 @@ public sealed record NightFreeRooms(DateOnly Night, int FreeRooms);
 public static class AvailabilityCalculator
 {
     /// <summary>
-    /// Longest stay that can be searched (and, from T5, booked), in nights. The specification sets no limit,
+    /// Longest stay that can be searched (and, with booking creation, booked), in nights. The specification sets no limit,
     /// so this is an assumption to agree with the customer: the average stay is 2 nights (table 12.14), and a
     /// month covers a business trip or a holiday; a longer stay is booked as several bookings or extended
     /// at the hotel (FR-21). The limit also bounds the work of one search (nights × categories × hotels of

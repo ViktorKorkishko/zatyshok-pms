@@ -31,7 +31,7 @@ public class AggregateLoadingTests(PostgresDatabaseFixture database) : IClassFix
 
         await using (var db = database.CreateDbContext())
         {
-            // No Include: the way a T5 service is most likely to read it.
+            // No Include: the way a booking service is most likely to read it.
             var booking = await db.Bookings.SingleAsync(b => b.Id == bookingId);
             Assert.Equal(2, booking.Nights.Count);
 

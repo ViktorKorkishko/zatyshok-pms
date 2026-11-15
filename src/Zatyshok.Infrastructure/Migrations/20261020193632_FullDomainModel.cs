@@ -1312,7 +1312,7 @@ namespace Zatyshok.Infrastructure.Migrations
                 schema: "billing");
 
             // Fixed by hand: EF generated these calls without newSchema, and
-            // such a RenameTable produces no SQL, so the T1 tables stayed in "rooms" after the
+            // such a RenameTable produces no SQL, so the InitialRooms tables stayed in "rooms" after the
             // rollback. "public" is where InitialRooms created them.
             migrationBuilder.RenameTable(
                 name: "SeasonRates",

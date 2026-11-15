@@ -11,7 +11,7 @@ namespace Zatyshok.Domain.Modules.Bookings;
 /// Hotel, category, guest, corporate client and room belong to other modules, so the booking
 /// keeps only their ids, and methods take the values a rule needs (the hotel's current date,
 /// the room's category, night prices) instead of those entities (9.4.1, rule 2). The application
-/// services of T5/T6 load the entities, lock the rate row (12.8.2) and change the room, the
+/// services for bookings and the front desk load the entities, lock the rate row (12.8.2) and change the room, the
 /// invoice and the outbox in the same transaction.
 /// </summary>
 public class Booking

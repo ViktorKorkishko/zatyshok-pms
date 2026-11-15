@@ -4,7 +4,7 @@ namespace Zatyshok.Domain.Modules.Housekeeping;
 
 /// <summary>
 /// Fault of a room (FR-30, UC-16, table 12.18). It is open until resolved; a room is
-/// OutOfOrder exactly while it has an open fault, and the T6 service changes both in one
+/// OutOfOrder exactly while it has an open fault, and the maintenance issue service changes both in one
 /// transaction (<c>Room.MarkOutOfOrder</c> / <c>Room.ReturnToService</c>).
 /// </summary>
 public class MaintenanceIssue

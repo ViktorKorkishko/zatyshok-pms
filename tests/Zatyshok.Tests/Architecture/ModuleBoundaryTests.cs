@@ -33,7 +33,7 @@ public class ModuleBoundaryTests
         .LoadAssemblies(DomainAssembly, InfrastructureAssembly, ApiAssembly)
         .Build();
 
-    // Modules with code in T2 (Domain/Modules/*); FrontDesk and Reporting get theirs in T6/T7.
+    // Modules with code in the domain model (Domain/Modules/*); FrontDesk and Reporting get theirs later.
     private static readonly string[] ExpectedModules =
         ["Audit", "Billing", "Bookings", "Guests", "Housekeeping", "Identity", "Notifications", "Rooms"];
 

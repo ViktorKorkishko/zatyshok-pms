@@ -117,8 +117,8 @@ internal static class TestData
     public static string Unique() => Guid.NewGuid().ToString("N")[..8];
 }
 
-/// <summary>Rows of a database from T1: written by SQL, because the current model has other tables.</summary>
-internal static class T1Data
+/// <summary>Rows of an InitialRooms database: written by SQL, because the current model has other tables.</summary>
+internal static class InitialRoomsData
 {
     /// <summary>
     /// One hotel with a category, a room, a rate and a seasonal period in the public tables of

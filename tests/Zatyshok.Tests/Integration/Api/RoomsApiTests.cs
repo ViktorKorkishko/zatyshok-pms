@@ -383,7 +383,7 @@ public class RoomsApiTests(ApiFixture api) : IClassFixture<ApiFixture>
     private async Task<RoomResponse> GetAsync(Guid roomId)
         => await (await api.Client.GetAsync($"{Url}/{roomId}")).ReadAsync<RoomResponse>();
 
-    /// <summary>Brings a room to a state the API of this step does not set (check-in is T5).</summary>
+    /// <summary>Brings a room to a state the current API does not set (check-in comes later).</summary>
     private async Task ChangeInDatabaseAsync(Guid roomId, Action<Room> change)
     {
         await using var db = api.CreateDbContext();
@@ -392,7 +392,7 @@ public class RoomsApiTests(ApiFixture api) : IClassFixture<ApiFixture>
         await db.SaveChangesAsync();
     }
 
-    /// <summary>Pre-assigns the first room of the hotel to a booking arriving today, as reception will in T5.</summary>
+    /// <summary>Pre-assigns the first room of the hotel to a booking arriving today, as reception will later.</summary>
     private async Task<Room> ReserveAsync(TestHotel hotel)
     {
         await using var db = api.CreateDbContext();

@@ -6,7 +6,7 @@ namespace Zatyshok.Api.Common.Logging;
 /// Gives every request a correlation id (table 9.9): taken from the
 /// X-Correlation-Id request header, so that a client or nginx can pass its own, or created anew.
 /// The id is returned in the same response header, added to every log record of the request as the
-/// CorrelationId scope and to ProblemDetails errors; T4 writes it to the audit log (AuditLogs.CorrelationId).
+/// CorrelationId scope and to ProblemDetails errors; the audit log will also record it (AuditLogs.CorrelationId).
 /// </summary>
 public sealed partial class CorrelationIdMiddleware(RequestDelegate next, ILogger<CorrelationIdMiddleware> logger)
 {

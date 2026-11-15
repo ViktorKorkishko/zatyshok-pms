@@ -55,7 +55,7 @@ builder.Services.AddZatyshokSwagger();
 
 builder.Services.AddZatyshokInfrastructure(builder.Configuration);
 
-// Hotel scope of the request (FR-02); the whole network until sign-in comes in T4.
+// Hotel scope of the request (FR-02); the whole network until sign-in is added.
 builder.Services.AddScoped<IHotelScope, WholeNetworkScope>();
 
 // GET /health returns Healthy only when the database answers (NFR-19).

@@ -38,7 +38,7 @@ public sealed record HotelOffers(Guid HotelId, string Name, string City, string 
 /// <summary>
 /// Public contract of the module «Бронювання» (table 9.6): availability of the categories for a stay (FR-09)
 /// and its cost (FR-08). FR-09 belongs to this module because availability is counted from the nights of its
-/// bookings (table 9.4). Booking creation in T5 runs the same formula under the rate lock (12.8.2).
+/// bookings (table 9.4). Booking creation will run the same formula under the rate lock (12.8.2).
 /// </summary>
 public interface IAvailabilityService
 {

@@ -3,8 +3,8 @@ namespace Zatyshok.Domain.Common;
 /// <summary>
 /// Hotels the current user may see and change (FR-02, NFR-08): one hotel for hotel-bound roles
 /// (receptionist, housekeeping, hotel manager) or the whole network. Application services take it
-/// as a required parameter and filter their queries by it explicitly (9.6). Until sign-in comes in
-/// T4 the API passes a scope of the whole network.
+/// as a required parameter and filter their queries by it explicitly (9.6). Until sign-in is
+/// added the API passes a scope of the whole network.
 /// </summary>
 public interface IHotelScope
 {
