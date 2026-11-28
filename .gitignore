@@ -435,3 +435,8 @@ dist/
 
 # JetBrains Rider
 .idea/
+
+# docs/ keeps only the submitted reports (docs/Звіт_*); chapter drafts (*.md)
+# and generated diagrams stay local
+/docs/*
+!/docs/Звіт_*
